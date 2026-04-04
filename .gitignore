@@ -1,0 +1,49 @@
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# KiCad backups, lock files, and history
+*-backups/
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*.lck
+fp-info-cache
+.history/
+
+# KiCad project files (auto-generated, not needed in repo)
+*.kicad_prl
+*.kicad_pro
+
+# PCB output (generated artifacts — regenerate with make drc/fab/svg)
+pcb/output/*
+!pcb/output/.gitkeep
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Claude Code
+.claude/
+CLAUDE.md
+
+# Reference images (not needed for build — datasheets/screenshots)
+*.png
+*.jpg
+*.jpeg
+# Keep the logo silk data (needed by PCB generator)
+!pcb/logo_silk.json
+# Keep SVG logo source if desired
+!logo-bw.svg

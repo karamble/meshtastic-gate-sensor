@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gate Sensor — LoRa · Meshtastic · Solar · PCB · Build Guide &amp; BOM v2.2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg:         #0d1117;
+    --bg2:        #161b22;
+    --bg3:        #21262d;
+    --border:     #30363d;
+    --border2:    #484f58;
+    --text:       #e6edf3;
+    --text2:      #8b949e;
+    --text3:      #6e7681;
+    --accent:     #58a6ff;
+    --accent2:    #1f6feb;
+    --green:      #3fb950;
+    --green2:     #238636;
+    --yellow:     #d29922;
+    --yellow2:    #b08800;
+    --red:        #f85149;
+    --orange:     #e3b341;
+    --purple:     #bc8cff;
+    --teal:       #39d353;
+    --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Monaco, Consolas, 'Courier New', monospace;
+    --tag-req:    #1f6feb;
+    --tag-rec:    #238636;
+    --tag-warn:   #b08800;
+    --tag-free:   #6e40c9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Header ────────────────────────────────── */
+  .site-header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+  }
+  .site-header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .site-header .meta {
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .site-header .meta span {
+    margin-right: 12px;
+  }
+  .site-header .meta .dot { color: var(--border2); }
+
+  /* ── Notice banner ─────────────────────────── */
+  .notice {
+    background: #1c1a00;
+    border: 1px solid var(--yellow2);
+    border-left: 4px solid var(--yellow);
+    padding: 12px 20px;
+    font-size: 13px;
+    color: #c9d1d9;
+    margin: 20px 32px;
+    border-radius: 4px;
+    line-height: 1.7;
+  }
+  .notice strong { color: var(--orange); }
+
+  /* ── Layout ────────────────────────────────── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px 60px; }
+
+  /* ── BOM Table ─────────────────────────────── */
+  .bom-section { margin-top: 32px; }
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  table.bom {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  table.bom thead tr {
+    background: var(--bg3);
+    border-bottom: 2px solid var(--border2);
+  }
+  table.bom th {
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+  table.bom td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text);
+  }
+  table.bom tr:hover td { background: rgba(255,255,255,.02); }
+  table.bom tr.group-header td {
+    background: var(--bg3);
+    color: var(--text2);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-top: 2px solid var(--border2);
+  }
+  table.bom tr.total-row td {
+    font-weight: 700;
+    background: var(--bg3);
+    border-top: 2px solid var(--border2);
+    color: var(--orange);
+  }
+  table.bom .num { color: var(--text3); font-variant-numeric: tabular-nums; }
+  table.bom .price { color: var(--green); font-weight: 600; font-variant-numeric: tabular-nums; }
+  table.bom .comp-name { font-weight: 600; color: var(--text); display: block; margin-bottom: 3px; }
+  table.bom .comp-desc { color: var(--text2); font-size: 12px; }
+  table.bom .source { color: var(--text2); font-size: 12px; }
+  table.bom a { color: var(--accent); text-decoration: none; }
+  table.bom a:hover { text-decoration: underline; }
+
+  /* ── Tags ──────────────────────────────────── */
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+  .tag-req  { background: var(--tag-req);  color: #fff; }
+  .tag-rec  { background: var(--tag-rec);  color: #fff; }
+  .tag-warn { background: var(--tag-warn); color: #fff; }
+  .tag-free { background: var(--tag-free); color: #fff; }
+  .tag-new  { background: #6e40c9; color: #fff; }
+
+  /* ── TOC ────────────────────────────────────── */
+  .toc {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin: 28px 0;
+  }
+  .toc-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 14px;
+  }
+  .toc ol { list-style: none; padding: 0; }
+  .toc li {
+    padding: 3px 0;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .toc .toc-phase {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent2);
+    background: rgba(31,111,235,.15);
+    padding: 1px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc .toc-sub { color: var(--text2); font-size: 12px; margin-left: 4px; }
+
+  /* ── Phase blocks ──────────────────────────── */
+  .phase {
+    margin-top: 40px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .phase-header {
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .phase-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(88,166,255,.12);
+    border: 1px solid rgba(88,166,255,.3);
+    padding: 2px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .phase-title { font-size: 16px; font-weight: 600; color: var(--text); }
+  .phase-sub { font-size: 12px; color: var(--text2); margin-left: auto; }
+  .phase-body { padding: 20px 24px; }
+
+  /* ── Steps ─────────────────────────────────── */
+  .step { margin-bottom: 28px; }
+  .step:last-child { margin-bottom: 0; }
+  .step-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    background: var(--accent2);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .step p { color: var(--text2); font-size: 13px; line-height: 1.7; margin-bottom: 10px; }
+  .step p strong { color: var(--text); }
+  .step ul, .step ol { padding-left: 20px; color: var(--text2); font-size: 13px; line-height: 1.8; margin-bottom: 10px; }
+  .step li strong { color: var(--text); }
+
+  /* ── Warning / info boxes ───────────────────── */
+  .warn-box, .info-box, .ok-box {
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    margin: 10px 0;
+    line-height: 1.7;
+  }
+  .warn-box {
+    background: #1c1a00;
+    border-left: 3px solid var(--yellow);
+    color: #c9d1d9;
+  }
+  .info-box {
+    background: #0d1d30;
+    border-left: 3px solid var(--accent);
+    color: #c9d1d9;
+  }
+  .ok-box {
+    background: #0d2010;
+    border-left: 3px solid var(--green);
+    color: #c9d1d9;
+  }
+  .warn-box strong { color: var(--orange); }
+  .info-box strong { color: var(--accent); }
+  .ok-box strong { color: var(--green); }
+
+  /* ── Code blocks ────────────────────────────── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 10px 0;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: #e6edf3;
+    letter-spacing: 0;
+    font-variant-ligatures: none;
+  }
+  pre .c  { color: var(--text3); }   /* comment */
+  pre .k  { color: var(--purple); }  /* keyword */
+  pre .s  { color: #a5d6ff; }        /* string */
+  pre .n  { color: var(--teal); }    /* define/macro */
+  pre .v  { color: var(--orange); }  /* value */
+  pre .f  { color: var(--accent); }  /* function */
+
+  code {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--orange);
+    letter-spacing: 0;
+    font-variant-ligatures: none;
+  }
+
+  /* ── ASCII diagram ──────────────────────────── */
+  .diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.55;
+    color: #8b949e;
+    overflow-x: auto;
+    margin: 10px 0;
+    white-space: pre;
+    letter-spacing: 0;
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "calt" 0;
+    tab-size: 4;
+    -moz-tab-size: 4;
+  }
+  .diagram .hl  { color: var(--green); }
+  .diagram .hl2 { color: var(--accent); }
+  .diagram .hl3 { color: var(--orange); }
+
+  /* ── Source summary table ───────────────────── */
+  table.sources {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 16px 0;
+  }
+  table.sources th {
+    background: var(--bg3);
+    padding: 7px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text2);
+    border-bottom: 2px solid var(--border2);
+  }
+  table.sources td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  table.sources tr:hover td { background: rgba(255,255,255,.02); }
+  table.sources a { color: var(--accent); text-decoration: none; }
+  table.sources a:hover { text-decoration: underline; }
+  .badge-ok   { color: var(--green); font-weight: 600; }
+  .badge-warn { color: var(--yellow); font-weight: 600; }
+
+  /* ── Gotchas table ──────────────────────────── */
+  table.gotchas {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 16px 0;
+  }
+  table.gotchas th {
+    background: var(--bg3);
+    padding: 7px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text2);
+    border-bottom: 2px solid var(--border2);
+  }
+  table.gotchas td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table.gotchas td:first-child { color: var(--red); font-weight: 500; width: 38%; }
+  table.gotchas td:last-child  { color: var(--text2); }
+  table.gotchas tr:hover td { background: rgba(255,255,255,.02); }
+
+  /* ── Power budget box ────────────────────────── */
+  .power-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .power-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+  .power-card .label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
+  .power-card .value { font-size: 20px; font-weight: 700; color: var(--orange); font-variant-numeric: tabular-nums; }
+  .power-card .unit  { font-size: 12px; color: var(--text2); margin-left: 3px; }
+  .power-card .note  { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+  /* ── Enclosure diagram ─────────────────────── */
+  .enclosure-wrap {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 12px 0;
+  }
+  .enclosure-caption {
+    background: var(--bg3);
+    padding: 6px 14px;
+    font-size: 11px;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+  }
+
+  /* ── Footer ────────────────────────────────── */
+  .site-footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 32px;
+    font-size: 12px;
+    color: var(--text3);
+    text-align: center;
+    margin-top: 60px;
+  }
+
+  /* ── Section headings inside phases ─────────── */
+  h3.sh {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin: 20px 0 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Inline message examples ─────────────────── */
+  .msg-list { margin: 10px 0; }
+  .msg {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    padding: 4px 0;
+    color: var(--text2);
+    display: flex;
+    gap: 10px;
+  }
+  .msg .emoji { flex-shrink: 0; width: 20px; }
+  .msg .body  { color: var(--text); }
+  .msg .meta  { color: var(--text3); margin-left: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══════════════════════════════════════════════════════════ -->
+<header class="site-header">
+  <h1>Gate Sensor — LoRa · Meshtastic · Solar UPS · Carrier PCB · Build Guide &amp; BOM</h1>
+  <div class="meta">
+    <span>BOM v2</span>
+    <span class="dot">·</span>
+    <span>1× sensor node</span>
+    <span class="dot">·</span>
+    <span>Heltec LoRa32 V3 · Arduino Nano · 433MHz RF · Waveshare Solar Manager D · 2× 18650</span>
+    <span class="dot">·</span>
+    <span>Meshtastic private channel output</span>
+    <span class="dot">·</span>
+    <span>Custom carrier PCB — 75×66mm · KiCad · JLCPCB</span>
+    <span class="dot">·</span>
+    <span>AliExpress / Amazon sourcing</span>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- ══ NOTICE ══════════════════════════════════════════════════════════ -->
+<div class="notice">
+  <strong>⚡ Architecture summary</strong> — A 433&nbsp;MHz wireless door sensor broadcasts an RF code every open/close event. An Arduino Nano (always-on, ~20mA) receives the code via an RXB6 module and forwards plain text over UART to a Heltec LoRa32&nbsp;V3 running Meshtastic firmware. Meshtastic relays the message to your private channel. A Waveshare Solar Power Manager&nbsp;D with 2× 18650 and a 6&nbsp;V 2&nbsp;W solar panel powers everything. <strong>No Xiaomi / BLE / Zigbee needed</strong> — a $3 433&nbsp;MHz sensor does the same job without encryption headaches.
+</div>
+
+<!-- ══ BOM ═══════════════════════════════════════════════════════════ -->
+<div class="bom-section">
+  <div class="section-label">🛒 Bill of Materials</div>
+
+  <table class="bom">
+    <thead>
+      <tr>
+        <th style="width:36px">#</th>
+        <th style="width:42px">Qty</th>
+        <th>Component</th>
+        <th>Vendor / Source</th>
+        <th style="width:80px">Price</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <tr class="group-header"><td colspan="5">► Core Electronics</td></tr>
+
+      <tr>
+        <td class="num">01</td>
+        <td>1×</td>
+        <td>
+          <span class="tag tag-req">Required</span>
+          <span class="comp-name">Heltec WiFi LoRa 32 V3</span>
+          <span class="comp-desc">ESP32-S3 · SX1262 LoRa · OLED 0.96" · 915/868/433&nbsp;MHz · USB-C · 5&nbsp;V in. Flash Meshtastic firmware — acts as the LoRa bridge node. Use the SMA antenna that ships in the box.</span>
+        </td>
+        <td class="source">AliExpress — search <em>"Heltec WiFi LoRa 32 V3"</em> · ~$18 · also Amazon</td>
+        <td class="price">~$18</td>
+      </tr>
+
+      <tr>
+        <td class="num">02</td>
+        <td>1×</td>
+        <td>
+          <span class="tag tag-req">Required</span>
+          <span class="comp-name">Arduino Nano Clone (CH340)</span>
+          <span class="comp-desc">ATmega328P · 5V logic · always-on sensor bridge — reads 433&nbsp;MHz codes and forwards text over SoftwareSerial UART to Heltec. CH340 USB chip — install driver once.</span>
+        </td>
+        <td class="source">AliExpress — search <em>"Arduino Nano CH340"</em> · ~$1.50</td>
+        <td class="price">~$1.50</td>
+      </tr>
+
+      <tr>
+        <td class="num">03</td>
+        <td>1×</td>
+        <td>
+          <span class="tag tag-req">Required</span>
+          <span class="comp-name">RXB6 433&nbsp;MHz Superheterodyne Receiver</span>
+          <span class="comp-desc">Better sensitivity than the cheap XY-MK-5V. 3.3–5&nbsp;V · ~5&nbsp;mA · DATA pin to Nano D2 (INT0 for RCSwitch). Pair with any helical or whip antenna for best range.</span>
+        </td>
+        <td class="source">AliExpress — search <em>"RXB6 433MHz superheterodyne"</em> · ~$1</td>
+        <td class="price">~$1</td>
+      </tr>
+
+      <tr>
+        <td class="num">04</td>
+        <td>1×</td>
+        <td>
+          <span class="tag tag-rec">Sensor</span>
+          <span class="comp-name">KERUI D026 — 433&nbsp;MHz Wireless Door / Window Sensor</span>
+          <span class="comp-desc">75×14×23&nbsp;mm · 433&nbsp;MHz · 50–150&nbsp;m open range · built-in omnidirectional antenna · <strong>sends both OPEN and CLOSED codes</strong> (required — many cheap EV1527 sensors only send OPEN). Battery: <strong>23A 12V</strong> (small cylindrical key-fob type, not CR2032 — widely available). Learn codes with serial monitor before flashing bridge sketch. Uses KERUI encoding — rc-switch still reads it correctly after learning.
+          <br><br><strong>Alternative:</strong> <em>Sonoff DW2-RF</em> (~$9) — CR2032, well-documented, confirmed open+close, slightly higher cost but more reliable protocol. Search "Sonoff DW2-RF" on AliExpress or itead.cc.
+          <br><br><strong>Avoid:</strong> generic unbranded EV1527 sensors (~$2) — most only transmit on open, not on close.</span>
+        </td>
+        <td class="source">AliExpress — search <em>"KERUI D026 433MHz"</em> · KERUI Official Store · ~$4–5<br>Alternative: <a href="https://itead.cc/product/sonoff-dw2-rf-433mhz-rf-wireless-door-window-sensor/" target="_blank">itead.cc Sonoff DW2-RF ↗</a> · ~$9</td>
+        <td class="price">~$4</td>
+      </tr>
+
+      <tr class="group-header"><td colspan="5">► Power — Solar UPS</td></tr>
+
+      <tr>
+        <td class="num">05</td>
+        <td>1×</td>
+        <td>
+          <span class="tag tag-rec">Recommended</span>
+          <span class="comp-name">Waveshare Solar Power Manager D</span>
+          <span class="comp-desc">Dual 18650 slots · MPPT solar input 4.8–6&nbsp;V · regulated 5&nbsp;V / 1.8&nbsp;A output · simultaneous charge + output · built-in cell protection · exposes BAT pin for voltage monitoring via Nano A0. No extra TP4056 modules needed.</span>
+        </td>
+        <td class="source"><a href="https://www.waveshare.com/solar-power-manager-d.htm" target="_blank">waveshare.com ↗</a> · ~$8 · also AliExpress</td>
+        <td class="price">~$8</td>
+      </tr>
+
+      <tr>
+        <td class="num">06</td>
+        <td>2×</td>
+        <td>
+          <span class="tag tag-req">Required</span>
+          <span class="comp-name">18650 Li-ion Battery — 3000&nbsp;mAh</span>
+          <span class="comp-desc">Samsung 30Q / LG MJ1 or equivalent. Both cells should be same brand and capacity. Waveshare Solar Manager D has built-in protection — unprotected cells OK. Standard 65&nbsp;mm length fits the slot.</span>
+        </td>
+        <td class="source">AliExpress / local electronics shop · ~$2 each</td>
+        <td class="price">~$4</td>
+      </tr>
+
+      <tr>
+        <td class="num">07</td>
+        <td>1×</td>
+        <td>
+          <span class="tag tag-rec">Recommended</span>
+          <span class="comp-name">6V 2W Solar Panel</span>
+          <span class="comp-desc">6&nbsp;V nominal matches Waveshare MPPT input range (4.8–6&nbsp;V) perfectly. 2&nbsp;W delivers ~330&nbsp;mA peak in full sun — charges both 18650 in ~9&nbsp;h from flat. Monocrystalline preferred. Include short JST/bare wire pigtail.</span>
+        </td>
+        <td class="source">AliExpress — search <em>"6V 2W solar panel mini"</em> · ~$4</td>
+        <td class="price">~$4</td>
+      </tr>
+
+      <tr class="group-header"><td colspan="5">► Enclosure &amp; Hardware</td></tr>
+
+      <tr>
+        <td class="num">08</td>
+        <td>1×</td>
+        <td>
+          <span class="comp-name">IP65 Junction Box — 150×100×70&nbsp;mm</span>
+          <span class="comp-desc">Weatherproof ABS enclosure. Fits all components on M3 standoffs. Two entries: one PG7 cable gland for solar wires, one SMA bulkhead for LoRa antenna (metal box blocks internal antenna — bulkhead is mandatory).</span>
+        </td>
+        <td class="source">AliExpress / local hardware store · ~$3</td>
+        <td class="price">~$3</td>
+      </tr>
+
+      <tr>
+        <td class="num">09</td>
+        <td>1×</td>
+        <td>
+          <span class="comp-name">SMA Bulkhead Connector + Pigtail</span>
+          <span class="comp-desc">SMA female panel-mount + short IPEX/U.FL to SMA pigtail (~10&nbsp;cm). Lets the LoRa antenna sit outside the metal box while the Heltec stays sealed inside.</span>
+        </td>
+        <td class="source">AliExpress · ~$1.50</td>
+        <td class="price">~$1.50</td>
+      </tr>
+
+      <tr>
+        <td class="num">10</td>
+        <td>1×</td>
+        <td>
+          <span class="comp-name">PG7 Waterproof Cable Gland</span>
+          <span class="comp-desc">For solar panel cable entry. Fits cables 3–6.5&nbsp;mm. Silicone seal. Drill 12&nbsp;mm hole in box side.</span>
+        </td>
+        <td class="source">AliExpress · bag of 10 for ~$1 · use one</td>
+        <td class="price">~$0.50</td>
+      </tr>
+
+      <tr>
+        <td class="num">11</td>
+        <td>1×</td>
+        <td>
+          <span class="comp-name">M3 Standoffs + Screws (brass, 10&nbsp;mm F/F)</span>
+          <span class="comp-desc">Mount Nano and Heltec boards. 4 per board minimum. Keeps boards off enclosure floor for airflow and avoids short circuits.</span>
+        </td>
+        <td class="source">AliExpress · kit ~$0.50</td>
+        <td class="price">~$0.50</td>
+      </tr>
+
+      <tr class="group-header"><td colspan="5">► Passive Components (on carrier PCB)</td></tr>
+
+      <tr>
+        <td class="num">12</td>
+        <td>1×</td>
+        <td>
+          <span class="comp-name">R1 — 2.2&nbsp;kΩ ¼W axial resistor</span>
+          <span class="comp-desc">Logic level divider — <strong>series resistor</strong>. Nano D3 (5V TX) → R1 → junction. Drops 5V to 3.0V for Heltec GPIO47 UART input.</span>
+        </td>
+        <td class="source">AliExpress resistor kit</td>
+        <td class="price">—</td>
+      </tr>
+      <tr>
+        <td class="num">13</td>
+        <td>1×</td>
+        <td>
+          <span class="comp-name">R2 — 3.3&nbsp;kΩ ¼W axial resistor</span>
+          <span class="comp-desc">Logic level divider — <strong>shunt to GND</strong>. Output: 5V × 3.3/(2.2+3.3) = <strong>3.0V</strong>. Safe for ESP32-S3 (abs max 3.6V).</span>
+        </td>
+        <td class="source">AliExpress resistor kit</td>
+        <td class="price">—</td>
+      </tr>
+      <tr>
+        <td class="num">14</td>
+        <td>1×</td>
+        <td>
+          <span class="comp-name">R3 — 10&nbsp;kΩ ¼W axial resistor</span>
+          <span class="comp-desc">Battery voltage divider — <strong>series</strong>. Waveshare BAT pin → R3 → junction → Nano A0.</span>
+        </td>
+        <td class="source">AliExpress resistor kit</td>
+        <td class="price">—</td>
+      </tr>
+      <tr>
+        <td class="num">15</td>
+        <td>1×</td>
+        <td>
+          <span class="comp-name">R4 — 10&nbsp;kΩ ¼W axial resistor</span>
+          <span class="comp-desc">Battery voltage divider — <strong>shunt to GND</strong>. Divides battery voltage by 2 (4.2V → 2.1V at A0).</span>
+        </td>
+        <td class="source">AliExpress resistor kit</td>
+        <td class="price">—</td>
+      </tr>
+      <tr>
+        <td class="num">16</td>
+        <td>1×</td>
+        <td>
+          <span class="tag tag-new">New v2.2</span>
+          <span class="comp-name">R5 — 10&nbsp;kΩ ¼W axial resistor</span>
+          <span class="comp-desc"><strong>DE pull-up</strong> — holds RXB6 Data Enable pin (pin 6) HIGH via 5V. Ensures receiver data output is always active.</span>
+        </td>
+        <td class="source">AliExpress resistor kit</td>
+        <td class="price">—</td>
+      </tr>
+      <tr>
+        <td class="num">17</td>
+        <td>1×</td>
+        <td>
+          <span class="tag tag-new">New v2.2</span>
+          <span class="comp-name">C1 — 100&nbsp;nF ceramic capacitor (MLCC or disc)</span>
+          <span class="comp-desc"><strong>Bypass cap</strong> near RXB6 VDD pins. Filters HF noise from 5V rail. Place close to pins 4+5. 2.54&nbsp;mm lead pitch.</span>
+        </td>
+        <td class="source">AliExpress capacitor kit</td>
+        <td class="price">—</td>
+      </tr>
+      <tr>
+        <td class="num">18</td>
+        <td>1×</td>
+        <td>
+          <span class="tag tag-new">New v2.2</span>
+          <span class="comp-name">C2 — 100&nbsp;µF / 16V electrolytic capacitor (radial)</span>
+          <span class="comp-desc"><strong>Bulk cap</strong> on 5V bus near J4. Smooths inrush current during Heltec TX (500mA peak). ~6.3&nbsp;mm dia, 5.08&nbsp;mm pitch.</span>
+        </td>
+        <td class="source">AliExpress capacitor kit</td>
+        <td class="price">—</td>
+      </tr>
+      <tr>
+        <td class="num">19</td>
+        <td>—</td>
+        <td>
+          <span class="comp-name">Misc — hookup wire, heat shrink, solder</span>
+          <span class="comp-desc">Short hookup wire for solar panel and antenna. Heat shrink for insulation. 60/40 or lead-free solder.</span>
+        </td>
+        <td class="source">Junk drawer</td>
+        <td class="price">~$1</td>
+      </tr>
+
+      <tr class="group-header"><td colspan="5">► Carrier PCB &amp; Connectors</td></tr>
+
+      <tr>
+        <td class="num">20</td>
+        <td>5×</td>
+        <td>
+          <span class="tag tag-rec">Recommended</span>
+          <span class="comp-name">Gate Sensor Carrier PCB v2.2 — 75×66&nbsp;mm · 2-layer</span>
+          <span class="comp-desc">Custom carrier board. Heltec V3 full 2×18 pin socket (36 total) · Nano 2×15 socket · RXB6 8-pin SIP direct solder · R1–R5 + C1 + C2 through-hole pads · J2/J3 screw terminals · J4 JST-PH power switch · M3 mounting holes · USB-C notch. Generated with <code>gate_sensor_pcb_v2.py</code> · <a href="gate_sensor_pcb_v2.py">download .py</a> · <a href="gate_sensor_v2.kicad_pcb">download .kicad_pcb</a> (see Phase 7). JLCPCB: 5 boards for ~$5 in the 100×100&nbsp;mm tier.</span>
+        </td>
+        <td class="source"><a href="https://jlcpcb.com" target="_blank">jlcpcb.com ↗</a> · upload Gerbers · 2-layer · HASL · ~$5 for 5 pcs · ~$4 shipping</td>
+        <td class="price">~$1 ea.</td>
+      </tr>
+
+      <tr>
+        <td class="num">21</td>
+        <td>1×</td>
+        <td>
+          <span class="comp-name">Female Pin Headers — 2.54&nbsp;mm pitch · strip</span>
+          <span class="comp-desc">Snap to length. Needed: 2×18 (Heltec socket) + 2×15 (Nano socket). Buy a 40-pin strip × 4 and snap. Standard single-row female headers, 8.5&nbsp;mm insulator height.</span>
+        </td>
+        <td class="source">AliExpress — search <em>"female pin header 2.54mm"</em> · bag of 10 strips ~$1</td>
+        <td class="price">~$1</td>
+      </tr>
+
+      <tr>
+        <td class="num">22</td>
+        <td>1×</td>
+        <td>
+          <span class="comp-name">JST-PH 2-pin Housing + Pre-crimped Cable (J4 Power Switch)</span>
+          <span class="comp-desc">2.0&nbsp;mm pitch. Plugs into J4 on the carrier PCB. One end connects to the power switch, other end to the PCB. Pre-crimped pigtails are easiest — no crimp tool needed. Or bridge J4 with a blob of solder if no switch is wanted.</span>
+        </td>
+        <td class="source">AliExpress — search <em>"JST PH 2pin connector cable"</em> · ~$0.50</td>
+        <td class="price">~$0.50</td>
+      </tr>
+
+      <tr>
+        <td class="num">23</td>
+        <td>1×</td>
+        <td>
+          <span class="comp-name">Power Switch — rocker or toggle (optional)</span>
+          <span class="comp-desc">Any ON/OFF switch rated ≥ 1&nbsp;A / 5&nbsp;V. Rocker switches fit cleanly in enclosure walls. Mount in the IP65 box side wall, wire JST-PH cable between J4 and switch terminals.</span>
+        </td>
+        <td class="source">AliExpress — search <em>"mini rocker switch 5V"</em> · ~$0.50</td>
+        <td class="price">~$0.50</td>
+      </tr>
+
+      <tr class="total-row">
+        <td colspan="4" style="text-align:right; padding-right:20px;">TOTAL — 1× complete sensor node with carrier PCB</td>
+        <td class="price" style="font-size:15px;">~$52</td>
+      </tr>
+
+    </tbody>
+  </table>
+</div>
+
+<!-- ══ SOURCE SUMMARY ════════════════════════════════════════════════ -->
+<div class="section-label" style="margin-top:28px;">🛒 Quick Source Summary</div>
+<table class="sources">
+  <thead>
+    <tr><th>#</th><th>Item</th><th>Search / Link</th><th>Price</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>01</td><td>Heltec LoRa32 V3</td><td><a href="https://heltec.org/project/wifi-lora-32-v3/" target="_blank">heltec.org ↗</a> · AliExpress "Heltec WiFi LoRa 32 V3"</td><td>~$18</td><td class="badge-ok">✓ In stock</td></tr>
+    <tr><td>02</td><td>Arduino Nano CH340</td><td>AliExpress "Arduino Nano CH340"</td><td>~$1.50</td><td class="badge-ok">✓ In stock</td></tr>
+    <tr><td>03</td><td>RXB6 433&nbsp;MHz Receiver</td><td>AliExpress "RXB6 433MHz superheterodyne"</td><td>~$1</td><td class="badge-ok">✓ In stock</td></tr>
+    <tr><td>04</td><td>KERUI D026 433&nbsp;MHz door sensor</td><td>AliExpress — search <em>"KERUI D026 433MHz"</em> · KERUI Official Store · Alt: <a href="https://itead.cc/product/sonoff-dw2-rf-433mhz-rf-wireless-door-window-sensor/" target="_blank">Sonoff DW2-RF ↗</a></td><td>~$4–9</td><td class="badge-ok">✓ In stock · both open+close</td></tr>
+    <tr><td>05</td><td>Waveshare Solar Power Manager D</td><td><a href="https://www.waveshare.com/solar-power-manager-d.htm" target="_blank">waveshare.com ↗</a></td><td>~$8</td><td class="badge-ok">✓ In stock</td></tr>
+    <tr><td>06</td><td>18650 3000&nbsp;mAh × 2</td><td>AliExpress / local · Samsung 30Q preferred</td><td>~$4</td><td class="badge-ok">✓ In stock</td></tr>
+    <tr><td>07</td><td>6V 2W Solar Panel</td><td>AliExpress "6V 2W solar panel mini"</td><td>~$4</td><td class="badge-ok">✓ In stock</td></tr>
+    <tr><td>08–12</td><td>Enclosure hardware</td><td>AliExpress / local hardware</td><td>~$6.50</td><td class="badge-ok">✓ In stock</td></tr>
+  </tbody>
+</table>
+
+<!-- ══ POWER BUDGET ══════════════════════════════════════════════════ -->
+<div class="section-label" style="margin-top:32px;">⚡ Power Budget</div>
+<div class="power-grid">
+  <div class="power-card">
+    <div class="label">Heltec V3 (Meshtastic idle)</div>
+    <div class="value">80<span class="unit">mA</span></div>
+  </div>
+  <div class="power-card">
+    <div class="label">Arduino Nano</div>
+    <div class="value">20<span class="unit">mA</span></div>
+  </div>
+  <div class="power-card">
+    <div class="label">RXB6 Receiver</div>
+    <div class="value">5<span class="unit">mA</span></div>
+  </div>
+  <div class="power-card">
+    <div class="label">Total Draw</div>
+    <div class="value">~105<span class="unit">mA</span></div>
+  </div>
+  <div class="power-card">
+    <div class="label">2× 18650 (6000&nbsp;mAh)</div>
+    <div class="value">~57<span class="unit">hrs</span></div>
+    <div class="note">backup — no sun</div>
+  </div>
+  <div class="power-card">
+    <div class="label">Solar peak (full sun)</div>
+    <div class="value">+195<span class="unit">mA</span></div>
+    <div class="note">net charging surplus</div>
+  </div>
+</div>
+
+<!-- ══ TOC ═══════════════════════════════════════════════════════════ -->
+<div class="toc">
+  <div class="toc-title">Contents — Implementation Phases</div>
+  <ol>
+    <li><span class="toc-phase">PH 1</span> <a href="#ph1">Flash Meshtastic on Heltec V3</a> <span class="toc-sub">Firmware flash · Serial module config · private channel</span></li>
+    <li><span class="toc-phase">PH 2</span> <a href="#ph2">Learn Your 433&nbsp;MHz Sensor Codes</a> <span class="toc-sub">Arduino sketch · Serial Monitor · record open/close codes</span></li>
+    <li><span class="toc-phase">PH 3</span> <a href="#ph3">Arduino Nano Bridge Code</a> <span class="toc-sub">433MHz receive · battery voltage · heartbeat · UART to Meshtastic</span></li>
+    <li><span class="toc-phase">PH 4</span> <a href="#ph4">Wiring — Complete Schematic</a> <span class="toc-sub">RXB6 · Nano · Heltec · Waveshare Solar D · voltage divider · BAT pin</span></li>
+    <li><span class="toc-phase">PH 5</span> <a href="#ph5">Enclosure Assembly</a> <span class="toc-sub">IP65 box layout · SMA bulkhead · cable gland · standoffs · solar mount</span></li>
+    <li><span class="toc-phase">PH 6</span> <a href="#ph6">Message Format &amp; Example Output</a> <span class="toc-sub">What arrives in the Meshtastic private channel</span></li>
+    <li><span class="toc-phase">PH 7</span> <a href="#ph7">Carrier PCB — KiCad · Finalize · Fabricate</a> <span class="toc-sub">gate_sensor_pcb_v2.py · generate · DRC · copper pours · Gerbers · JLCPCB · solder guide · J4 switch</span></li>
+    <li><span class="toc-phase">⚠</span> <a href="#gotchas">Known Gotchas &amp; Troubleshooting</a></li>
+  </ol>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- PH1 — Meshtastic flash                                           -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="phase" id="ph1">
+  <div class="phase-header">
+    <span class="phase-num">Phase 1</span>
+    <span class="phase-title">Flash Meshtastic on Heltec LoRa32 V3</span>
+    <span class="phase-sub">~15 min</span>
+  </div>
+  <div class="phase-body">
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">1</span>Flash Meshtastic firmware</div>
+      <p>Go to <a href="https://flasher.meshtastic.org" target="_blank" style="color:var(--accent)">flasher.meshtastic.org</a> in Chrome. Connect Heltec V3 via USB-C. Select:</p>
+      <ul>
+        <li><strong>Device:</strong> Heltec WiFi LoRa 32 (V3)</li>
+        <li><strong>Version:</strong> Latest stable</li>
+      </ul>
+      <p>Click Flash. The flasher erases and writes in one step. Device reboots into Meshtastic.</p>
+      <div class="info-box"><strong>ℹ</strong> No Arduino IDE needed for this step. The web flasher handles everything including the bootloader.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">2</span>Add Heltec to the Meshtastic app</div>
+      <p>Open the Meshtastic phone app → <strong>+</strong> → Bluetooth. The Heltec will appear as <code>Meshtastic_XXXX</code>. Pair it. The OLED will show <em>Connected</em>.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">3</span>Configure frequency and private channel</div>
+      <p>In the app go to <strong>Radio Config → LoRa</strong>. Set region to match your country (EU_868, US_915, etc.).</p>
+      <p>Go to <strong>Channels</strong>. Edit Channel 0 (or add a new channel): set a <strong>Pre-Shared Key</strong> and a channel name (e.g. <code>GATE</code>). This becomes your private channel. Your receiving Meshtastic device must have the same channel config.</p>
+      <div class="warn-box"><strong>⚠ EU 868&nbsp;MHz:</strong> Meshtastic defaults to 1% duty cycle compliance. With heartbeats every 5 minutes and event messages, you will stay within limits comfortably.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">4</span>Enable the Serial Module</div>
+      <p>Via Meshtastic app → <strong>Module Config → Serial</strong>, or via CLI:</p>
+<pre>
+<span class="c"># Using meshtastic Python CLI (pip install meshtastic)</span>
+meshtastic --set serial.enabled true
+meshtastic --set serial.mode TEXT
+meshtastic --set serial.rxd 47        <span class="c"># Heltec V3 default RXD</span>
+meshtastic --set serial.txd 43        <span class="c"># Heltec V3 default TXD</span>
+meshtastic --set serial.baud BAUD_9600
+meshtastic --set serial.timeout 1000
+meshtastic --set serial.channel 0     <span class="c"># Send to channel 0 (your private channel)</span>
+</pre>
+      <div class="ok-box"><strong>✓</strong> Any text line terminated with <code>\n</code> sent to the Heltec UART at 9600 baud is broadcast as a channel message. No additional code runs on the Heltec.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- PH2 — Learn sensor codes                                         -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="phase" id="ph2">
+  <div class="phase-header">
+    <span class="phase-num">Phase 2</span>
+    <span class="phase-title">Learn Your 433&nbsp;MHz Sensor Codes</span>
+    <span class="phase-sub">~10 min · do this before flashing the bridge code</span>
+  </div>
+  <div class="phase-body">
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">1</span>Install rc-switch library</div>
+      <p>In Arduino IDE: <strong>Sketch → Include Library → Manage Libraries</strong> → search <em>rc-switch</em> → Install.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">2</span>Upload the code-learning sketch</div>
+<pre>
+<span class="k">#include</span> <span class="s">&lt;RCSwitch.h&gt;</span>
+
+RCSwitch rf = RCSwitch();
+
+<span class="k">void</span> <span class="f">setup</span>() {
+  Serial.<span class="f">begin</span>(115200);
+  rf.<span class="f">enableReceive</span>(4); <span class="c">// RXB6 DATA → Nano D2 (INT0)</span>
+}
+
+<span class="k">void</span> <span class="f">loop</span>() {
+  <span class="k">if</span> (rf.<span class="f">available</span>()) {
+    Serial.<span class="f">printf</span>(<span class="s">"Code: %lu  Bits: %d  Protocol: %d\n"</span>,
+      rf.<span class="f">getReceivedValue</span>(),
+      rf.<span class="f">getReceivedBitlength</span>(),
+      rf.<span class="f">getReceivedProtocol</span>());
+    rf.<span class="f">resetAvailable</span>();
+  }
+}
+</pre>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">3</span>Record open and close codes</div>
+      <p>Open Serial Monitor at 115200 baud. Open and close your sensor several times. You will see two distinct codes — note them both. Example output:</p>
+<pre>
+Code: 1234561  Bits: 24  Protocol: 1   <span class="c">← gate OPEN</span>
+Code: 1234560  Bits: 24  Protocol: 1   <span class="c">← gate CLOSED</span>
+</pre>
+      <div class="info-box"><strong>ℹ</strong> The code repeats 3–5 times per event (RF retransmission). This is normal. You only need the unique value, not the duplicates.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- PH3 — Bridge code                                                 -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="phase" id="ph3">
+  <div class="phase-header">
+    <span class="phase-num">Phase 3</span>
+    <span class="phase-title">Arduino Nano Bridge Code</span>
+    <span class="phase-sub">433&nbsp;MHz → UART → Meshtastic · with battery monitor + heartbeat</span>
+  </div>
+  <div class="phase-body">
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">1</span>Required libraries</div>
+      <p>Install via Arduino IDE Library Manager:</p>
+      <ul>
+        <li><strong>rc-switch</strong> — 433&nbsp;MHz receive</li>
+        <li><strong>SoftwareSerial</strong> — included with Arduino core, no install needed</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">2</span>Full bridge sketch — paste your codes at the top</div>
+<pre>
+<span class="k">#include</span> <span class="s">&lt;RCSwitch.h&gt;</span>
+<span class="k">#include</span> <span class="s">&lt;SoftwareSerial.h&gt;</span>
+
+<span class="c">// ── Config ─────────────────────────────────────────</span>
+<span class="n">#define</span> CODE_OPEN     <span class="v">1234561UL</span>   <span class="c">// ← replace with your OPEN code</span>
+<span class="n">#define</span> CODE_CLOSED   <span class="v">1234560UL</span>   <span class="c">// ← replace with your CLOSED code</span>
+<span class="n">#define</span> SENSOR_NAME   <span class="s">"Gate"</span>
+
+<span class="n">#define</span> RF_PIN        <span class="v">2</span>           <span class="c">// RXB6 DATA pin (now D2)</span>
+<span class="n">#define</span> BAT_PIN       <span class="v">A0</span>          <span class="c">// Waveshare BAT pin via divider</span>
+
+<span class="c">// Timing</span>
+<span class="n">#define</span> HEARTBEAT_MS   <span class="v">300000UL</span>  <span class="c">// 5 min heartbeat</span>
+<span class="n">#define</span> BAT_CHECK_MS    <span class="v">60000UL</span>  <span class="c">// 1 min battery check</span>
+<span class="n">#define</span> DEBOUNCE_MS       <span class="v">200UL</span>  <span class="c">// ignore retransmits</span>
+
+<span class="c">// Battery thresholds (voltage at BAT pin, before divider halving)</span>
+<span class="n">#define</span> BAT_LOW       <span class="v">3.5</span>
+<span class="n">#define</span> BAT_CRITICAL  <span class="v">3.2</span>
+
+<span class="c">// ── Objects ────────────────────────────────────────</span>
+RCSwitch rf = RCSwitch();
+SoftwareSerial meshSerial(<span class="v">4</span>, <span class="v">3</span>); <span class="c">// RX=D4(unused), TX=D3 → Heltec GPIO47</span>
+
+<span class="c">// ── State ──────────────────────────────────────────</span>
+<span class="k">unsigned long</span> lastHeartbeat  = <span class="v">0</span>;
+<span class="k">unsigned long</span> lastBatCheck   = <span class="v">0</span>;
+<span class="k">unsigned long</span> lastRFEvent    = <span class="v">0</span>;
+<span class="k">bool</span> batLowSent      = <span class="v">false</span>;
+<span class="k">bool</span> batCriticalSent = <span class="v">false</span>;
+
+<span class="c">// ── Battery reading ────────────────────────────────</span>
+<span class="k">float</span> <span class="f">readBatVoltage</span>() {
+  <span class="c">// 10k/10k divider halves the voltage; Nano ADC ref = 5V</span>
+  <span class="k">int</span> raw = <span class="f">analogRead</span>(BAT_PIN);
+  <span class="k">return</span> (raw / <span class="v">1023.0</span>) * <span class="v">5.0</span> * <span class="v">2.0</span>;
+}
+
+String <span class="f">batIcon</span>(<span class="k">float</span> v) {
+  <span class="k">if</span> (v >= <span class="v">3.8</span>) <span class="k">return</span> <span class="s">"[BATT OK]"</span>;
+  <span class="k">if</span> (v >= <span class="v">3.5</span>) <span class="k">return</span> <span class="s">"[BATT LOW]"</span>;
+  <span class="k">return</span> <span class="s">"[BATT CRIT]"</span>;
+}
+
+<span class="c">// ── Send to Meshtastic ──────────────────────────────</span>
+<span class="k">void</span> <span class="f">sendMesh</span>(String msg) {
+  meshSerial.<span class="f">println</span>(msg);
+  Serial.<span class="f">println</span>(<span class="s">"TX: "</span> + msg);
+}
+
+<span class="c">// ── Battery check ───────────────────────────────────</span>
+<span class="k">void</span> <span class="f">checkBattery</span>() {
+  <span class="k">float</span> v = <span class="f">readBatVoltage</span>();
+
+  <span class="k">if</span> (v &lt;= BAT_CRITICAL &amp;&amp; !batCriticalSent) {
+    <span class="f">sendMesh</span>(<span class="s">"GATE NODE: CRITICAL BATTERY "</span> + String(v, <span class="v">2</span>) + <span class="s">"V — may go offline!"</span>);
+    batCriticalSent = batLowSent = <span class="v">true</span>;
+
+  } <span class="k">else if</span> (v &lt;= BAT_LOW &amp;&amp; !batLowSent) {
+    <span class="f">sendMesh</span>(<span class="s">"GATE NODE: Low battery "</span> + String(v, <span class="v">2</span>) + <span class="s">"V — check solar"</span>);
+    batLowSent = <span class="v">true</span>;
+  }
+
+  <span class="k">if</span> (v >= <span class="v">3.8</span> &amp;&amp; batLowSent) {
+    <span class="f">sendMesh</span>(<span class="s">"GATE NODE: Battery recovered "</span> + String(v, <span class="v">2</span>) + <span class="s">"V"</span>);
+    batLowSent = batCriticalSent = <span class="v">false</span>;
+  }
+}
+
+<span class="c">// ── Heartbeat ───────────────────────────────────────</span>
+<span class="k">void</span> <span class="f">sendHeartbeat</span>() {
+  <span class="k">float</span> v = <span class="f">readBatVoltage</span>();
+  <span class="f">sendMesh</span>(<span class="s">"GATE NODE: Online "</span> + <span class="f">batIcon</span>(v) + <span class="s">" "</span> + String(v, <span class="v">2</span>) + <span class="s">"V"</span>);
+}
+
+<span class="c">// ── Setup ────────────────────────────────────────────</span>
+<span class="k">void</span> <span class="f">setup</span>() {
+  Serial.<span class="f">begin</span>(115200);
+  meshSerial.<span class="f">begin</span>(9600);
+  rf.<span class="f">enableReceive</span>(RF_PIN);
+  delay(<span class="v">1000</span>);
+  <span class="f">sendHeartbeat</span>(); <span class="c">// announce online at boot</span>
+}
+
+<span class="c">// ── Loop ─────────────────────────────────────────────</span>
+<span class="k">void</span> <span class="f">loop</span>() {
+  <span class="k">unsigned long</span> now = <span class="f">millis</span>();
+
+  <span class="c">// ── 433MHz event ──────────────────────────────────</span>
+  <span class="k">if</span> (rf.<span class="f">available</span>()) {
+    <span class="k">unsigned long</span> code = rf.<span class="f">getReceivedValue</span>();
+
+    <span class="c">// debounce: ignore retransmits within 200ms</span>
+    <span class="k">if</span> (now - lastRFEvent > DEBOUNCE_MS) {
+      lastRFEvent = now;
+      <span class="k">float</span> v = <span class="f">readBatVoltage</span>();
+      String bat = <span class="s">" "</span> + <span class="f">batIcon</span>(v) + <span class="s">" "</span> + String(v, <span class="v">2</span>) + <span class="s">"V"</span>;
+
+      <span class="k">if</span> (code == CODE_OPEN)   <span class="f">sendMesh</span>(SENSOR_NAME + String(<span class="s">": OPEN"</span>)   + bat);
+      <span class="k">if</span> (code == CODE_CLOSED) <span class="f">sendMesh</span>(SENSOR_NAME + String(<span class="s">": CLOSED"</span>) + bat);
+    }
+    rf.<span class="f">resetAvailable</span>();
+  }
+
+  <span class="c">// ── Battery check every 1 min ─────────────────────</span>
+  <span class="k">if</span> (now - lastBatCheck >= BAT_CHECK_MS) {
+    <span class="f">checkBattery</span>();
+    lastBatCheck = now;
+  }
+
+  <span class="c">// ── Heartbeat every 5 min ─────────────────────────</span>
+  <span class="k">if</span> (now - lastHeartbeat >= HEARTBEAT_MS) {
+    <span class="f">sendHeartbeat</span>();
+    lastHeartbeat = now;
+  }
+}
+</pre>
+      <div class="warn-box"><strong>⚠ Board selection:</strong> In Arduino IDE select <strong>Arduino Nano</strong> · Processor: <em>ATmega328P (Old Bootloader)</em> for most cheap CH340 Nano clones.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- PH4 — Wiring                                                      -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="phase" id="ph4">
+  <div class="phase-header">
+    <span class="phase-num">Phase 4</span>
+    <span class="phase-title">Complete Wiring Schematic</span>
+    <span class="phase-sub">All connections</span>
+  </div>
+  <div class="phase-body">
+
+    <h3 class="sh">Full Wiring Diagram</h3>
+    <div class="enclosure-wrap">
+      <div class="enclosure-caption">ASCII Wiring — Gate Sensor Node</div>
+      <div class="diagram">
+<span class="hl">                  ☀️  6V 2W Solar Panel</span>
+                  +  ───────────────────────────────────────┐
+                  -  ────────────────────────────────────┐  │
+                                                         │  │
+<span class="hl2">         ┌────────────────────────────────────────┐</span>     │  │
+<span class="hl2">         │       Waveshare Solar Power Manager D  │</span>     │  │
+<span class="hl2">         │                                        │</span>     │  │
+<span class="hl2">         │  SOLAR+ ◄──────────────────────────────┼─────┼──┘</span>
+<span class="hl2">         │  SOLAR- ◄──────────────────────────────┼─────┘</span>
+<span class="hl2">         │                                        │</span>
+<span class="hl2">         │  [18650 slot 1]  [18650 slot 2]        │</span>
+<span class="hl2">         │                                        │</span>
+<span class="hl2">         │  5V OUT ─────────────────────────────────────────────────────┐</span>
+<span class="hl2">         │  GND    ──────────────────────────────────────────────────┐  │</span>
+<span class="hl2">         │  BAT    ──────────────────────────────────────────────┐  │  │</span>
+<span class="hl2">         └────────────────────────────────────────┘</span>          │  │  │
+                                                               │  │  │
+                        ┌──────────────────────────────────────┘  │  │
+                        │  ┌───────────────────────────────────────┘  │
+                        │  │  ┌────────────────────────────────────────┘
+                        │  │  │
+<span class="hl3">         ┌──────────────┴──┴──┴─────────────────────────────────────┐</span>
+<span class="hl3">         │                   Arduino Nano                           │</span>
+<span class="hl3">         │                                                          │</span>
+<span class="hl3">         │  5V (R12) ◄── 5V (from Waveshare 5V OUT)                │</span>
+<span class="hl3">         │  GND  ◄─────── GND (shared)                              │</span>
+<span class="hl3">         │  A0   ◄─────── BAT pin via 10k/10k voltage divider       │</span>
+<span class="hl3">         │  D2 (INT0) ◄── RXB6 DATA                                 │</span>
+<span class="hl3">         │  D3 (TX) ──── [2k2] ──┬──► Heltec GPIO47 (RXD)           │</span>
+<span class="hl3">         │                      [3k3]    (3.0V logic)              │</span>
+<span class="hl3">         │                       │                                  │</span>
+<span class="hl3">         │                      GND                                 │</span>
+<span class="hl3">         └──────────────────────────────────────────────────────────┘</span>
+
+<span class="hl2">         ┌──────────────────────────────────────────────────────────┐</span>
+<span class="hl2">         │                 Heltec LoRa32 V3 (Meshtastic)            │</span>
+<span class="hl2">         │                                                          │</span>
+<span class="hl2">         │  5V   ◄─────── 5V (from Waveshare 5V OUT)                │</span>
+<span class="hl2">         │  GND  ◄─────── GND (shared)                              │</span>
+<span class="hl2">         │  GPIO47 (RXD) ◄─── Nano D3 TX (via 2.2k/3.3k divider)       │</span>
+<span class="hl2">         │  SMA antenna port ──► [pigtail] ──► SMA bulkhead ──► 🔊  │</span>
+<span class="hl2">         └──────────────────────────────────────────────────────────┘</span>
+
+<span class="hl">         ┌──────────────────────────────────────────────────────────┐</span>
+<span class="hl">         │                 RXB6 433MHz Receiver                     │</span>
+<span class="hl">         │                                                          │</span>
+<span class="hl">         │  VCC  ◄─────── 3.3V (Nano 3.3V pin)                      │</span>
+<span class="hl">         │  GND  ◄─────── GND (shared)                              │</span>
+<span class="hl">         │  DATA ──────► Nano D2 (INT0)                                    │</span>
+<span class="hl">         └──────────────────────────────────────────────────────────┘</span>
+
+         ┌──────────────────────────────────────────────────────────┐
+         │    BAT Pin Voltage Divider (10kΩ / 10kΩ)                 │
+         │                                                          │
+         │    Waveshare BAT ──── 10kΩ ────┬──── Nano A0             │
+         │                               10kΩ                       │
+         │                                │                         │
+         │                               GND                        │
+         │                                                          │
+         │    Max BAT voltage: 4.2V → A0 sees 2.1V (safe for 5V)    │
+         └──────────────────────────────────────────────────────────┘
+
+         Logic Level Divider — Nano TX (5V) → Heltec GPIO47 (3.3V max):
+
+         Nano D3 (TX) ── 2.2kΩ ──┬── Heltec GPIO47
+                                  3.3kΩ
+                                   │
+                                  GND   → 5V × 3.3/(3.3+2.2) = 3.0V ✓
+
+         R1 = 2.2kΩ  (series, PCB footprint R1)
+         R2 = 3.3kΩ  (shunt to GND, PCB footprint R2)
+</div>
+    </div>
+
+    <div class="warn-box"><strong>⚠ 5V → 3.3V logic divider is mandatory.</strong> The Arduino Nano outputs 5V on TX. The Heltec V3 (ESP32-S3) GPIO tolerates maximum 3.6V. Feeding 5V directly will damage the ESP32. Use the 2.2kΩ + 3.3kΩ divider shown above.</div>
+
+    <div class="info-box"><strong>ℹ Shared GND:</strong> All three boards (Nano, Heltec, Waveshare) must share a common GND. Run a GND bus wire between all GND pins. A small piece of stripboard or terminal block works well inside the enclosure.</div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- PH5 — Enclosure                                                   -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="phase" id="ph5">
+  <div class="phase-header">
+    <span class="phase-num">Phase 5</span>
+    <span class="phase-title">Enclosure Assembly</span>
+    <span class="phase-sub">IP65 150×100×70mm junction box</span>
+  </div>
+  <div class="phase-body">
+
+    <h3 class="sh">Internal Layout</h3>
+    <div class="enclosure-wrap">
+      <div class="enclosure-caption">Top-down view — IP65 Junction Box (150 × 100 mm internal)</div>
+      <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                  IP65 Junction Box                          │
+│                  150 × 100 × 70 mm                          │
+│                                                             │
+│  ┌──────────────────────┐    ┌────────────────────────┐     │
+│  │  Waveshare            │    │  Heltec LoRa32 V3      │    │
+│  │  Solar Power Mgr D   │    │  (Meshtastic)          │     │
+│  │                      │    │                        │     │
+│  │  [18650 #1][18650 #2]│    │  OLED faces up         │     │
+│  │                      │                                   │  SMA pigtail ──────────┼────┼── SMA bulkhead ──► LoRa ant.
+│  └──────────┬───────────┘    └────────────────────────┘     │
+│             │ 5V / GND                                      │
+│             │                                               │
+│  ┌──────────┴───────────────────────────────────────┐       │
+│  │  Arduino Nano   (center bottom, on standoffs)    │       │
+│  │                                                  │       │
+│  │  ┌──────────┐  ← RXB6 module (right of Nano)    │        │
+│  │  │   RXB6   │     antenna wire runs to corner    │       │
+│  │  └──────────┘                                    │       │
+│  └──────────────────────────────────────────────────┘       │
+│                                                             │
+│  ════════════════════════════════════════════════════       │
+│  [PG7 cable gland]    [SMA bulkhead hole]                   │
+│       solar cable          LoRa antenna                     │
+└─────────────────────────────────────────────────────────────┘
+      </div>
+    </div>
+
+    <h3 class="sh">Assembly Steps</h3>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">1</span>Drill and prep the box</div>
+      <ul>
+        <li>Side wall: 12&nbsp;mm hole for <strong>PG7 cable gland</strong> (solar panel cable)</li>
+        <li>Side wall: 16&nbsp;mm hole for <strong>SMA bulkhead</strong> connector (LoRa antenna)</li>
+        <li>Deburr all holes. Fit cable gland and SMA bulkhead before populating boards.</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">2</span>Mount boards on standoffs</div>
+      <ul>
+        <li>Mark M3 hole positions for Nano and Heltec on enclosure floor</li>
+        <li>Drill 3.2&nbsp;mm pilot holes, thread M3 brass standoffs (10&nbsp;mm F/F)</li>
+        <li>Waveshare Solar Manager D has its own mounting holes — use same M3 standoffs</li>
+        <li>Heltec OLED should face upward toward the lid if you want to see status without opening</li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">3</span>Connect LoRa antenna</div>
+      <p>Connect Heltec's onboard IPEX/U.FL antenna port → short pigtail cable → SMA bulkhead on box wall → external antenna outside. The enclosure is ABS plastic so RF can pass through the wall, but a direct external antenna is still strongly recommended for range.</p>
+      <div class="warn-box"><strong>⚠</strong> Never operate the Heltec's LoRa transmitter without an antenna connected. The SX1262 PA will be damaged by unmatched impedance.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">4</span>Route solar cable</div>
+      <p>Thread solar panel cable through PG7 cable gland. Connect + and − to the SOLAR+ / SOLAR− terminals on the Waveshare board. Tighten the cable gland seal. Apply a bead of silicone sealant around any remaining gap inside.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">5</span>Insert 18650 cells</div>
+      <p>Insert both cells into the Waveshare Solar Manager D slots — check polarity markings. Both cells should be the same brand and at approximately the same charge level. The board LED will indicate charging status.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">6</span>Solar panel mounting</div>
+      <p>Mount the solar panel on the enclosure lid, or on a nearby fence post with the cable routed to the box. South-facing (northern hemisphere) at a 30–45° tilt for best year-round generation. Secure with UV-resistant cable ties or silicone adhesive.</p>
+      <div class="ok-box"><strong>✓ Tip:</strong> Even in winter or overcast conditions, a 2&nbsp;W panel produces enough charge to keep the system online indefinitely with normal gate activity.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- PH6 — Messages                                                    -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="phase" id="ph6">
+  <div class="phase-header">
+    <span class="phase-num">Phase 6</span>
+    <span class="phase-title">Message Format — What Arrives on the Meshtastic Device</span>
+  </div>
+  <div class="phase-body">
+
+    <p style="color:var(--text2);font-size:13px;margin-bottom:14px;">All messages appear in your private Meshtastic channel. The format includes sensor name, state, battery icon, and live battery voltage:</p>
+
+    <div class="enclosure-wrap">
+      <div class="enclosure-caption">Private channel — example messages</div>
+      <div class="diagram" style="padding:16px 20px;">
+<span class="hl">Gate: OPEN [BATT OK] 4.02V</span>          <span class="hl2">← gate opened — battery full</span>
+<span class="hl">Gate: CLOSED [BATT OK] 4.01V</span>        <span class="hl2">← gate closed</span>
+GATE NODE: Online [BATT OK] 3.95V  <span class="hl2">← heartbeat every 5 min</span>
+GATE NODE: Online [BATT OK] 3.88V  <span class="hl2">← heartbeat</span>
+<span class="hl3">GATE NODE: Low battery 3.48V — check solar</span>   <span class="hl2">← alert: check panel</span>
+GATE NODE: Online [BATT LOW] 3.46V <span class="hl2">← heartbeat during low bat</span>
+<span class="hl3">GATE NODE: CRITICAL BATTERY 3.21V — may go offline!</span>
+<span class="hl">GATE NODE: Battery recovered 3.84V</span>  <span class="hl2">← sun came out / charged</span>
+<span class="hl">Gate: OPEN [BATT OK] 3.91V</span>
+      </div>
+    </div>
+
+    <div class="info-box" style="margin-top:14px;"><strong>ℹ Multiple sensors:</strong> To monitor multiple doors, add more <code>CODE_OPEN_n</code> / <code>CODE_CLOSED_n</code> pairs and unique sensor names in the sketch. The RXB6 listens to all 433&nbsp;MHz sensors simultaneously. No hardware changes needed.</div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- PH7 — PCB                                                         -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="phase" id="ph7">
+  <div class="phase-header">
+    <span class="phase-num">Phase 7</span>
+    <span class="phase-title">Carrier PCB — KiCad Generation · Finalization · Fabrication</span>
+    <span class="phase-sub">~90 min total</span>
+  </div>
+  <div class="phase-body">
+
+    <!-- PCB file callout -->
+    <div class="ok-box" style="margin-bottom:18px;">
+      <strong>📄 PCB Script:</strong> <code>gate_sensor_pcb_v2.py</code> · <a href="gate_sensor_pcb_v2.py">download .py</a> · <a href="gate_sensor_v2.kicad_pcb">download .kicad_pcb</a> — companion file to this document.
+      Run it in KiCad to generate the complete <code>gate_sensor_v2.kicad_pcb</code> board file.
+      All components, sockets, resistors, connectors, traces, silkscreen, and USB-C notch are generated automatically.
+    </div>
+
+    <h3 class="sh">Board Summary — what the script produces</h3>
+    <div class="diagram" style="font-size:12px; line-height:1.6;">
+  90 × 75 mm  ·  2-layer  ·  1.6 mm FR4  ·  HASL finish
+
+  U3  Heltec LoRa32 V3    18-pin + 18-pin female socket  (22.86 mm row sep)
+      USB-C access notch cut into top edge of board
+      All 43 GPIO pins labelled on silkscreen
+
+  U1  Arduino Nano         2×15 female socket  (15.24 mm row sep (600 mil))
+      All 30 pins labelled on silkscreen
+
+  U2  RXB6 433 MHz         1×4 direct solder holes  0.9 mm drill
+
+  R1  2.2 kΩ  THT axial    D3 → logic level junction
+  R2  3.3 kΩ  THT axial    logic level junction → GND
+  R3  10 kΩ   THT axial    BAT_RAW → BAT_DIV junction
+  R4  10 kΩ   THT axial    BAT_DIV junction → GND
+
+  J2  5V IN    2-pin screw terminal 5.08 mm    +5V / GND from Waveshare
+  J3  BAT IN   2-pin screw terminal 5.08 mm    BAT+ / GND from Waveshare
+  J4  PWR SW   JST-PH 2-pin 2.0 mm             inline power switch
+
+  MH1–MH4  M3 non-plated mounting holes at corners
+    </div>
+
+    <!-- ── Step 1: Install KiCad ─────────────────────────────────────── -->
+    <div class="step" style="margin-top:20px;">
+      <div class="step-title"><span class="step-num">1</span>Install KiCad 7 or 8</div>
+      <p>Download from <a href="https://www.kicad.org/download/" target="_blank" style="color:var(--accent)">kicad.org/download</a>. Install the full package including the scripting engine. The script is tested on KiCad 7.0 and 8.0.</p>
+      <ul>
+        <li><strong>Windows:</strong> run the .exe installer, select all components</li>
+        <li><strong>macOS:</strong> drag KiCad.app to Applications</li>
+        <li><strong>Linux (Ubuntu/Debian):</strong> <code>sudo add-apt-repository ppa:kicad/kicad-7.0-releases &amp;&amp; sudo apt install kicad</code></li>
+      </ul>
+      <div class="info-box"><strong>ℹ</strong> KiCad is free and open-source. No licence required.</div>
+    </div>
+
+    <!-- ── Step 2: Run the script ─────────────────────────────────────── -->
+    <div class="step">
+      <div class="step-title"><span class="step-num">2</span>Run <code>gate_sensor_pcb_v2.py</code> to generate the board</div>
+
+      <h3 class="sh" style="margin-top:12px;">Option A — KiCad Scripting Console (recommended)</h3>
+      <p>This loads the board directly into the editor — no file navigation needed.</p>
+      <ol style="margin: 8px 0 10px 20px; color:var(--text2); font-size:13px; line-height:1.9;">
+        <li>Open KiCad → click <strong>PCB Editor</strong> (or File → New Project first)</li>
+        <li>In the PCB Editor: <strong>Tools → Scripting Console</strong></li>
+        <li>In the console prompt, type:</li>
+      </ol>
+<pre>
+exec(open('/path/to/gate_sensor_pcb_v2.py').read())
+<span class="c"># Example paths:</span>
+<span class="c"># Windows:  exec(open('C:/Users/you/Downloads/gate_sensor_pcb_v2.py').read())</span>
+<span class="c"># macOS:    exec(open('/Users/you/Downloads/gate_sensor_pcb_v2.py').read())</span>
+<span class="c"># Linux:    exec(open('/home/you/Downloads/gate_sensor_pcb_v2.py').read())</span>
+</pre>
+      <p>The board generates in ~2 seconds and loads automatically into the editor. You will see all components placed with silkscreen and traces.</p>
+
+      <h3 class="sh" style="margin-top:16px;">Option B — Command line</h3>
+<pre>
+<span class="c"># Linux — KiCad 7</span>
+PYTHONPATH=/usr/lib/kicad/scripting python3 gate_sensor_pcb_v2.py
+
+<span class="c"># macOS — adjust path to match your KiCad version</span>
+PYTHONPATH="/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/Current/lib/python3.x/site-packages" \
+  python3 gate_sensor_pcb_v2.py
+
+<span class="c"># Windows — use KiCad's bundled Python</span>
+<span class="c"># "C:\Program Files\KiCad\7.0\bin\python.exe" gate_sensor_pcb_v2.py</span>
+</pre>
+      <p>Output file: <code>gate_sensor_v2.kicad_pcb</code> — saved in the same directory as the script. Open in KiCad with File → Open.</p>
+    </div>
+
+    <!-- ── Step 3: Review the board ──────────────────────────────────── -->
+    <div class="step">
+      <div class="step-title"><span class="step-num">3</span>Review the generated board in KiCad</div>
+      <p>After the script runs, pan and zoom around the board. Check:</p>
+      <ul>
+        <li>All three component outlines visible — Heltec socket (top-left), Nano socket (right), RXB6 (lower-center)</li>
+        <li>USB-C notch visible as a rectangular cutout at the top edge between the Heltec rows</li>
+        <li>J2, J3, J4 visible along the bottom edge</li>
+        <li>R1–R4 visible between Heltec right row and Nano left row</li>
+        <li>Silkscreen labels on all pins (use View → Show Layers → F.SilkS to toggle)</li>
+        <li>Copper traces visible in red (F.Cu) connecting the key nets</li>
+      </ul>
+      <div class="info-box"><strong>ℹ Ratsnest lines</strong> — thin white lines between pads mean an electrical connection exists in the netlist but no copper trace was routed yet. There will be a few on J4 (power switch — intentional) and possibly a few signal stubs. These get resolved in Step 5.</div>
+    </div>
+
+    <!-- ── Step 4: DRC ────────────────────────────────────────────────── -->
+    <div class="step">
+      <div class="step-title"><span class="step-num">4</span>Run Design Rules Check (DRC)</div>
+      <p>In KiCad PCB Editor: <strong>Inspect → Design Rules Checker → Run DRC</strong></p>
+      <p>Expected results on a freshly generated board:</p>
+      <table class="gotchas" style="margin-top:8px;">
+        <thead><tr><th>DRC item</th><th>What to do</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Unconnected items (ratsnest)</td>
+            <td>Note which nets are unrouted. Most will be minor stubs — route them in Step 5. J4 will show one unconnected item between <code>5V_IN</code> and <code>5V</code> — this is intentional (the switch closes it externally).</td>
+          </tr>
+          <tr>
+            <td>Clearance violations</td>
+            <td>Should be zero on a freshly generated board. If any appear, check that your DRC rules use standard 0.2&nbsp;mm clearance. File → Board Setup → Design Rules.</td>
+          </tr>
+          <tr>
+            <td>Silk over pad</td>
+            <td>Some silkscreen labels may overlap pads at the dense Heltec socket area. Acceptable for fabrication — fab houses ignore silk on pad. Click <em>Ignore</em> for these.</td>
+          </tr>
+          <tr>
+            <td>Footprint warnings</td>
+            <td>The generated footprints use raw pads rather than library footprints. DRC may warn about missing 3D models or courtyard overlaps. Safe to ignore for fabrication.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── Step 5: Route remaining stubs ─────────────────────────────── -->
+    <div class="step">
+      <div class="step-title"><span class="step-num">5</span>Route remaining ratsnest stubs</div>
+      <p>The script routes all key signal and power tracks. A few short stubs may remain depending on pad placement precision. Use the Interactive Router to close them:</p>
+      <ul>
+        <li>Press <strong>X</strong> to activate the route track tool</li>
+        <li>Click the start pad of a ratsnest line, route to the destination pad, press <strong>Esc</strong> when done</li>
+        <li>Use <strong>U</strong> to select connected tracks and inspect routing</li>
+        <li>For GND stubs: route any remaining GND pads down to the horizontal GND bus at Y=64&nbsp;mm</li>
+      </ul>
+      <div class="info-box"><strong>ℹ J4 ratsnest</strong> — the single unconnected line between J4 pin 1 (<code>5V_IN</code>) and J4 pin 2 (<code>5V</code>) should <strong>NOT</strong> be routed. The external switch closes this connection. Leave it as-is.</div>
+    </div>
+
+    <!-- ── Step 6: Copper pours ────────────────────────────────────────── -->
+    <div class="step">
+      <div class="step-title"><span class="step-num">6</span>Add GND copper pours (strongly recommended)</div>
+      <p>A GND pour on both layers floods all unused copper with ground, automatically connecting all GND pads and dramatically improving signal return paths and EMI immunity.</p>
+      <ol style="margin: 8px 0 10px 20px; color:var(--text2); font-size:13px; line-height:1.9;">
+        <li><strong>F.Cu pour:</strong> Place → Add Rule Area → draw a rectangle covering the entire board (click corners, close with double-click)</li>
+        <li>In the zone settings dialog: Layer = <strong>F.Cu</strong> · Net = <strong>GND</strong> · Clearance = 0.3&nbsp;mm · Min width = 0.25&nbsp;mm</li>
+        <li>Repeat for <strong>B.Cu</strong> with Net = <strong>GND</strong></li>
+        <li>Press <strong>B</strong> to fill all zones — copper floods appear on both layers</li>
+        <li>Re-run DRC to confirm no new violations from the pour</li>
+      </ol>
+      <div class="ok-box"><strong>✓ Result:</strong> The board should now show very few or zero DRC errors and all GND connections resolved via the pour rather than individual tracks.</div>
+    </div>
+
+    <!-- ── Step 7: Export Gerbers ─────────────────────────────────────── -->
+    <div class="step">
+      <div class="step-title"><span class="step-num">7</span>Export Gerbers for fabrication</div>
+      <p><strong>File → Fabrication Outputs → Gerbers (.gbr)</strong></p>
+      <p>In the Gerber export dialog, select these layers:</p>
+      <ul>
+        <li>F.Cu, B.Cu — copper</li>
+        <li>F.SilkS, B.SilkS — silkscreen</li>
+        <li>F.Mask, B.Mask — solder mask</li>
+        <li>Edge.Cuts — board outline (includes USB-C notch)</li>
+        <li>F.Paste — optional (not needed for HASL finish)</li>
+      </ul>
+      <p>Click <strong>Generate Drill Files</strong> in the same dialog. Select Excellon format, separate files for PTH and NPTH (non-plated mounting holes). Click <strong>Generate Drill File</strong>.</p>
+      <p>Zip all .gbr and .drl files into a single archive: <code>gate_sensor_v2_gerbers.zip</code></p>
+      <div class="warn-box"><strong>⚠</strong> Always use <strong>Plot → Check</strong> (or Gerber Viewer in KiCad) to visually inspect the exported files before uploading. Confirm the USB-C notch appears in the Edge.Cuts layer as a notch, not a full rectangle.</div>
+    </div>
+
+    <!-- ── Step 8: Order from JLCPCB ─────────────────────────────────── -->
+    <div class="step">
+      <div class="step-title"><span class="step-num">8</span>Order from JLCPCB</div>
+      <p>Go to <a href="https://jlcpcb.com" target="_blank" style="color:var(--accent)">jlcpcb.com</a> → <strong>Order Now</strong> → upload <code>gate_sensor_v2_gerbers.zip</code>. JLCPCB auto-detects dimensions and layer count.</p>
+      <table class="sources" style="margin-top:10px;">
+        <thead><tr><th>Setting</th><th>Value</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Base Material</td><td>FR-4</td><td>Standard</td></tr>
+          <tr><td>Layers</td><td>2</td><td>Auto-detected</td></tr>
+          <tr><td>Dimensions</td><td>90 × 75&nbsp;mm</td><td>Auto-detected — fits $5 tier</td></tr>
+          <tr><td>PCB Qty</td><td>5</td><td>Minimum order — ~$5</td></tr>
+          <tr><td>PCB Thickness</td><td>1.6&nbsp;mm</td><td>Standard</td></tr>
+          <tr><td>PCB Color</td><td>Green / Black</td><td>Black looks great, same price</td></tr>
+          <tr><td>Silkscreen</td><td>White</td><td>Auto with color choice</td></tr>
+          <tr><td>Surface Finish</td><td>HASL (with lead)</td><td>Cheapest · fine for THT only</td></tr>
+          <tr><td>Copper Weight</td><td>1 oz</td><td>Sufficient for ~105&nbsp;mA</td></tr>
+          <tr><td>Via Covering</td><td>Tented</td><td>Standard</td></tr>
+          <tr><td>Board Outline Tolerance</td><td>±0.2&nbsp;mm</td><td>Standard</td></tr>
+          <tr><td>Confirm Production File</td><td>No</td><td>Speed up production</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:10px;">Typical total: <strong>~$5 PCBs + ~$4 shipping = ~$9</strong> for 5 boards. Delivery 7–14 days standard, 3–5 days expedited.</p>
+      <div class="info-box"><strong>ℹ PCBWay alternative:</strong> Same Gerbers work on <a href="https://www.pcbway.com" target="_blank" style="color:var(--accent)">pcbway.com</a> — slightly higher quality control, ~$5 for 5 boards + shipping.</div>
+    </div>
+
+    <!-- ── Step 9: Soldering guide ────────────────────────────────────── -->
+    <div class="step">
+      <div class="step-title"><span class="step-num">9</span>Soldering guide — what goes where</div>
+      <p>When boards arrive, solder in this order (small components first, tallest last):</p>
+      <table class="sources" style="margin-top:10px;">
+        <thead><tr><th>Component</th><th>Action</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>R1–R5, C1, C2 (passives)</td>
+            <td><strong>Solder direct</strong></td>
+            <td>Axial through-hole. Bend leads, insert, solder, trim flush. Verify values with multimeter before inserting.</td>
+          </tr>
+          <tr>
+            <td>J2, J3 (screw terminals)</td>
+            <td><strong>Solder direct</strong></td>
+            <td>Push flat against PCB. Solder from below. Open screws face outward (toward board edge).</td>
+          </tr>
+          <tr>
+            <td>J4 (JST-PH 2-pin holes)</td>
+            <td><strong>Solder JST-PH through-hole pins</strong> or solder bridge</td>
+            <td>See Step 10 — power switch options. Solder the right-angle or vertical JST-PH header into the holes.</td>
+          </tr>
+          <tr>
+            <td>U2 RXB6 socket</td>
+            <td><strong>Solder 1×4 male header onto RXB6</strong>, then solder RXB6+header direct into PCB holes</td>
+            <td>If RXB6 has bare holes (no pins), solder a 1×4 male header onto it first. Then insert and solder the whole assembly into the board. This board is fixed — not removable.</td>
+          </tr>
+          <tr>
+            <td>U1 Nano socket</td>
+            <td><strong>Solder 2×15 female headers to PCB</strong></td>
+            <td>Insert both 1×15 female strip headers into the U1 holes. Hold flush and solder one corner pin each, check alignment, then solder remaining pins. Nano plugs in after.</td>
+          </tr>
+          <tr>
+            <td>U3 Heltec socket</td>
+            <td><strong>Solder 1×21 + 1×22 female headers to PCB</strong></td>
+            <td>Same method as Nano. The 22-pin right row is one pin longer — align from the top (pin 1 / GND end). Leave the USB-C notch unobstructed. Heltec plugs in after.</td>
+          </tr>
+          <tr>
+            <td>MH1–MH4 mounting holes</td>
+            <td><strong>No solder</strong></td>
+            <td>Non-plated. Insert M3 screws and standoffs from below to mount carrier on enclosure floor.</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="warn-box" style="margin-top:10px;"><strong>⚠ Female header alignment tip:</strong> Insert a male pin strip (or plug the actual board in temporarily) to keep the female headers perfectly aligned while you solder the first two pins. Remove the alignment board, verify straight, then solder all remaining pins.</div>
+    </div>
+
+    <!-- ── Step 10: J4 power switch options ──────────────────────────── -->
+    <div class="step">
+      <div class="step-title"><span class="step-num">10</span>J4 power switch — three options</div>
+      <p>J4 is a 2-pin JST-PH (2.0&nbsp;mm pitch) footprint inline on the 5V rail. Pin 1 is always-live from J2; pin 2 feeds the switched 5V bus to Heltec and Nano. Choose one of:</p>
+
+      <div class="enclosure-wrap" style="margin-top:12px;">
+        <div class="enclosure-caption">Option A — External rocker/toggle switch (recommended)</div>
+        <div class="diagram" style="padding:14px 18px;">
+J2 (+5V) ──► PCB trace ──► J4 pin1 ──► wire ──► SWITCH ──► wire ──► J4 pin2 ──► 5V bus
+
+1. Solder a right-angle JST-PH 2-pin header into J4 holes
+2. Crimp a JST-PH female housing onto a 2-wire pigtail
+3. Wire other end to a panel-mount rocker switch in the enclosure wall
+4. Mount switch in 12mm hole in IP65 box side wall
+        </div>
+      </div>
+
+      <div class="enclosure-wrap" style="margin-top:8px;">
+        <div class="enclosure-caption">Option B — Solder bridge (always on, no switch)</div>
+        <div class="diagram" style="padding:14px 18px;">
+J4 pin1 ──► [solder blob between the two holes] ──► J4 pin2
+
+Simply bridge the two J4 holes with a small blob of solder on the back of the board.
+System powers on as soon as J2 receives 5V from the Waveshare board.
+        </div>
+      </div>
+
+      <div class="enclosure-wrap" style="margin-top:8px;">
+        <div class="enclosure-caption">Option C — JST-PH inline cable with switch (cleanest)</div>
+        <div class="diagram" style="padding:14px 18px;">
+J4 ──► JST-PH female ──► cable ──► inline rocker ──► JST-PH male ──► (looped back to J4 pin2)
+
+Buy a pre-wired JST-PH inline power switch (common on RC / LiPo accessories).
+Plugs directly into J4 — no crimping needed.
+Search: "JST PH 2pin inline switch"
+        </div>
+      </div>
+
+      <div class="ok-box" style="margin-top:12px;"><strong>✓ Recommended:</strong> Option A with a mini rocker switch mounted in the enclosure wall. Lets you power-cycle without opening the box. Drill a 12&nbsp;mm hole in the IP65 box side, snap in a waterproof rocker switch, and wire with 2× short JST-PH cables.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- GOTCHAS                                                            -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="phase" id="gotchas">
+  <div class="phase-header">
+    <span class="phase-num">⚠</span>
+    <span class="phase-title">Known Gotchas &amp; Troubleshooting</span>
+  </div>
+  <div class="phase-body">
+    <table class="gotchas">
+      <thead>
+        <tr><th>Symptom</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Meshtastic receives no messages from UART</td>
+          <td>Check that <code>serial.enabled true</code> and <code>serial.mode TEXT</code> are set in Meshtastic module config. Verify baud rate matches (9600 on both Nano and Meshtastic). Check that Nano TX → Heltec GPIO47 (not GPIO43 which is TX). Swap RX/TX if swapped.</td>
+        </tr>
+        <tr>
+          <td>RCSwitch receives no codes / garbage values</td>
+          <td>RXB6 is on 5V — verify VCC (pins 4+5) is connected to the 5V bus. Check DATA pin (pin 7) is on Nano D2 (INT0). Try moving sensor closer during first test. Use a short wire antenna on the RXB6 ANT pin (17.3&nbsp;cm for 433&nbsp;MHz) for better range.</td>
+        </tr>
+        <tr>
+          <td>Same code fires repeatedly / debounce not working</td>
+          <td>433&nbsp;MHz sensors retransmit 3–10 times per event. The <code>DEBOUNCE_MS</code> check in the loop suppresses duplicates. Increase to 500ms if still seeing doubles in Meshtastic.</td>
+        </tr>
+        <tr>
+          <td>Heltec not detected by Meshtastic app after flash</td>
+          <td>Hold the Heltec BOOT button while pressing RST to force DFU mode, then reflash. Some V3 boards need a full erase first — in the web flasher check <em>Full Erase</em> before flashing.</td>
+        </tr>
+        <tr>
+          <td>Battery voltage reads 0V or nonsense on A0</td>
+          <td>Confirm the Waveshare Solar Manager D BAT pin is wired through the 10k/10k divider to Nano A0. Check that the divider has a common GND connection. Measure BAT pin voltage directly with a multimeter first (should be 3.3–4.2V when charged).</td>
+        </tr>
+        <tr>
+          <td>No solar charging / Waveshare LED always red</td>
+          <td>Verify solar panel is 6V (not 5V or 12V). Check polarity — reverse polarity protection exists but still confirm + / −. Measure panel voltage in sunlight: should be 5.5–6.5V open circuit. Shade or winter conditions may reduce to 3–4V — insufficient for MPPT.</td>
+        </tr>
+        <tr>
+          <td>Heltec OLED blank after Meshtastic flash</td>
+          <td>Normal — Meshtastic dims the OLED after a timeout to save power. Press the button on the Heltec to wake it. OLED shows node info, channel, battery level.</td>
+        </tr>
+        <tr>
+          <td>Gate sensor code not recognized (wrong code)</td>
+          <td>Re-run the code-learning sketch in Phase 2. The KERUI D026 uses KERUI encoding rather than plain EV1527 — rc-switch can still read it but the protocol number may differ. Make sure rc-switch captures a stable repeating code on open AND close separately. If only one code appears, the sensor may be open-only — switch to KERUI D026 or Sonoff DW2-RF which both send open+close. If Protocol 2 or 3 appears, add <code>rf.setProtocol(2)</code> before <code>enableReceive</code>.</td>
+        </tr>
+        <tr>
+          <td>Meshtastic duty cycle warning (EU)</td>
+          <td>The heartbeat every 5 minutes plus event messages stay well within 1% duty cycle. If you reduce the heartbeat interval below 2 minutes and have a busy gate, you may hit limits. Increase <code>HEARTBEAT_MS</code> if warnings appear.</td>
+        </tr>
+        <tr>
+          <td>Water ingress in enclosure</td>
+          <td>Ensure PG7 cable gland is fully tightened and O-ring is seated. Apply silicone sealant around the SMA bulkhead nut inside. Check lid gasket is clean and not pinched by wires. Face cable entry downward if possible so water runs away from the opening.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<footer class="site-footer">
+  Gate Sensor LoRa · Meshtastic Build Guide &amp; BOM v2 — total build cost ~$50 · Heltec V3 · Arduino Nano · RXB6 · 433MHz sensor · Waveshare Solar D · 2× 18650 · 6V 2W solar panel · IP65 enclosure · Custom carrier PCB 75×66mm · KiCad · JLCPCB
+</footer>
+
+</body>
+</html>
