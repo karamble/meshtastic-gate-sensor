@@ -11,7 +11,7 @@ The firmware runs on the Arduino Nano (ATmega328P) and acts as a bridge between 
 firmware/
   platformio.ini      PlatformIO project config
   include/
-    config.h          Sensor codes, pin definitions, timing, battery thresholds
+    config.h          Sensor codes, pin definitions, timing
   src/
     main.cpp          Main firmware (setup + loop)
 ```
@@ -37,7 +37,6 @@ Defined in `firmware/include/config.h`:
 | Define | Value | Function |
 |--------|-------|----------|
 | `RF_PIN` | 2 | RXB6 DATA input. D2 = INT0 (required by RCSwitch `enableReceive`). |
-| `BAT_PIN` | A0 | Battery voltage divider midpoint (10k/10k, reads BAT/2). |
 | `SERIAL_TX` | 3 | SoftwareSerial TX to Heltec GPIO47 via level divider. |
 | `SERIAL_RX` | 4 | SoftwareSerial RX (unused, placeholder — Heltec TX not connected). |
 
@@ -61,17 +60,7 @@ These must be learned from your specific KERUI D026 sensor using the RCSwitch ex
 | Define | Default | Description |
 |--------|---------|-------------|
 | `HEARTBEAT_MS` | 300000 (5 min) | Interval between "Online" heartbeat messages |
-| `BAT_CHECK_MS` | 60000 (1 min) | Interval between battery voltage checks |
 | `DEBOUNCE_MS` | 200 | Minimum time between accepted RF events (filters retransmissions) |
-
-### Battery Thresholds
-
-| Define | Default | Description |
-|--------|---------|-------------|
-| `BAT_LOW` | 3.5V | Triggers "Low battery" warning |
-| `BAT_CRITICAL` | 3.2V | Triggers "CRITICAL BATTERY" alert |
-
-Battery voltage is read through a 10k/10k divider. The ADC sees half the actual voltage. The firmware compensates: `actual = (raw / 1024.0) * 5.0 * 2.0`.
 
 ## Message Format
 
@@ -80,22 +69,14 @@ All messages are sent as plain text over SoftwareSerial at 9600 baud. Meshtastic
 ### Gate Events
 
 ```
-Gate: OPEN [BATT OK] 4.02V
-Gate: CLOSED [BATT OK] 3.98V
+Gate: OPEN
+Gate: CLOSED
 ```
 
 ### Heartbeat (every 5 minutes)
 
 ```
-GATE NODE: Online [BATT OK] 4.02V
-```
-
-### Battery Warnings
-
-```
-GATE NODE: Low battery 3.45V -- check solar
-GATE NODE: CRITICAL BATTERY 3.15V -- may go offline!
-GATE NODE: Battery recovered 3.55V
+GATE NODE: Online
 ```
 
 ### Unknown RF Codes (debug output only, not sent to mesh)
@@ -113,14 +94,12 @@ This is printed to the Nano's USB serial (115200 baud) only, not forwarded to Me
 1. Initialize USB serial at 115200 baud (debug)
 2. Initialize SoftwareSerial at 9600 baud (Meshtastic)
 3. Enable RCSwitch interrupt receiver on D2 (INT0)
-4. Read initial battery voltage
-5. Send startup heartbeat
+4. Send startup heartbeat
 
 ### loop()
 
-1. **RF event handling:** When RCSwitch receives a valid code, debounce (200ms), read battery, and send the appropriate gate event message. Unknown codes are logged to USB serial.
-2. **Battery monitoring:** Every 60 seconds, read battery voltage. Send alerts on transitions: OK->LOW, LOW->CRITICAL, CRITICAL/LOW->OK (recovered).
-3. **Heartbeat:** Every 5 minutes, read battery and send "Online" status.
+1. **RF event handling:** When RCSwitch receives a valid code, debounce (200ms) and send the appropriate gate event message. Unknown codes are logged to USB serial.
+2. **Heartbeat:** Every 5 minutes, send "Online" status.
 
 ## Build and Upload
 

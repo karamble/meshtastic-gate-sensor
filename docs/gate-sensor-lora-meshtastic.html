@@ -578,7 +578,7 @@
         <td>
           <span class="tag tag-rec">Recommended</span>
           <span class="comp-name">Waveshare Solar Power Manager D</span>
-          <span class="comp-desc">Dual 18650 slots · MPPT solar input 4.8–6&nbsp;V · regulated 5&nbsp;V / 1.8&nbsp;A output · simultaneous charge + output · built-in cell protection · exposes BAT pin for voltage monitoring via Nano A0. No extra TP4056 modules needed.</span>
+          <span class="comp-desc">Dual 18650 slots · MPPT solar input 4.8–6&nbsp;V · regulated 5&nbsp;V / 1.8&nbsp;A output · simultaneous charge + output · built-in cell protection. Handles battery management internally — no external monitoring needed. No extra TP4056 modules needed.</span>
         </td>
         <td class="source"><a href="https://www.waveshare.com/solar-power-manager-d.htm" target="_blank">waveshare.com ↗</a> · ~$8 · also AliExpress</td>
         <td class="price">~$8</td>
@@ -680,26 +680,6 @@
         <td class="num">14</td>
         <td>1×</td>
         <td>
-          <span class="comp-name">R3 — 10&nbsp;kΩ ¼W axial resistor</span>
-          <span class="comp-desc">Battery voltage divider — <strong>series</strong>. Waveshare BAT pin → R3 → junction → Nano A0.</span>
-        </td>
-        <td class="source">AliExpress resistor kit</td>
-        <td class="price">—</td>
-      </tr>
-      <tr>
-        <td class="num">15</td>
-        <td>1×</td>
-        <td>
-          <span class="comp-name">R4 — 10&nbsp;kΩ ¼W axial resistor</span>
-          <span class="comp-desc">Battery voltage divider — <strong>shunt to GND</strong>. Divides battery voltage by 2 (4.2V → 2.1V at A0).</span>
-        </td>
-        <td class="source">AliExpress resistor kit</td>
-        <td class="price">—</td>
-      </tr>
-      <tr>
-        <td class="num">16</td>
-        <td>1×</td>
-        <td>
           <span class="tag tag-new">New v2.2</span>
           <span class="comp-name">R5 — 10&nbsp;kΩ ¼W axial resistor</span>
           <span class="comp-desc"><strong>DE pull-up</strong> — holds RXB6 Data Enable pin (pin 6) HIGH via 5V. Ensures receiver data output is always active.</span>
@@ -708,7 +688,7 @@
         <td class="price">—</td>
       </tr>
       <tr>
-        <td class="num">17</td>
+        <td class="num">15</td>
         <td>1×</td>
         <td>
           <span class="tag tag-new">New v2.2</span>
@@ -719,7 +699,7 @@
         <td class="price">—</td>
       </tr>
       <tr>
-        <td class="num">18</td>
+        <td class="num">16</td>
         <td>1×</td>
         <td>
           <span class="tag tag-new">New v2.2</span>
@@ -730,7 +710,7 @@
         <td class="price">—</td>
       </tr>
       <tr>
-        <td class="num">19</td>
+        <td class="num">17</td>
         <td>—</td>
         <td>
           <span class="comp-name">Misc — hookup wire, heat shrink, solder</span>
@@ -743,19 +723,19 @@
       <tr class="group-header"><td colspan="5">► Carrier PCB &amp; Connectors</td></tr>
 
       <tr>
-        <td class="num">20</td>
+        <td class="num">18</td>
         <td>5×</td>
         <td>
           <span class="tag tag-rec">Recommended</span>
           <span class="comp-name">Gate Sensor Carrier PCB v2.2 — 75×66&nbsp;mm · 2-layer</span>
-          <span class="comp-desc">Custom carrier board. Heltec V3 full 2×18 pin socket (36 total) · Nano 2×15 socket · RXB6 8-pin SIP direct solder · R1–R5 + C1 + C2 through-hole pads · J2/J3 screw terminals · J4 JST-PH power switch · M3 mounting holes · USB-C notch. Generated with <code>gate_sensor_pcb_v2.py</code> · <a href="gate_sensor_pcb_v2.py">download .py</a> · <a href="gate_sensor_v2.kicad_pcb">download .kicad_pcb</a> (see Phase 7). JLCPCB: 5 boards for ~$5 in the 100×100&nbsp;mm tier.</span>
+          <span class="comp-desc">Custom carrier board. Heltec V3 full 2×18 pin socket (36 total) · Nano 2×15 socket · RXB6 8-pin SIP direct solder · R1–R5 + C1 + C2 through-hole pads · J2 screw terminal · J4 JST-PH power switch · M3 mounting holes · USB-C notch. Generated with <code>gate_sensor_pcb_v2.py</code> · <a href="gate_sensor_pcb_v2.py">download .py</a> · <a href="gate_sensor_v2.kicad_pcb">download .kicad_pcb</a> (see Phase 7). JLCPCB: 5 boards for ~$5 in the 100×100&nbsp;mm tier.</span>
         </td>
         <td class="source"><a href="https://jlcpcb.com" target="_blank">jlcpcb.com ↗</a> · upload Gerbers · 2-layer · HASL · ~$5 for 5 pcs · ~$4 shipping</td>
         <td class="price">~$1 ea.</td>
       </tr>
 
       <tr>
-        <td class="num">21</td>
+        <td class="num">19</td>
         <td>1×</td>
         <td>
           <span class="comp-name">Female Pin Headers — 2.54&nbsp;mm pitch · strip</span>
@@ -766,7 +746,7 @@
       </tr>
 
       <tr>
-        <td class="num">22</td>
+        <td class="num">20</td>
         <td>1×</td>
         <td>
           <span class="comp-name">JST-PH 2-pin Housing + Pre-crimped Cable (J4 Power Switch)</span>
@@ -777,7 +757,7 @@
       </tr>
 
       <tr>
-        <td class="num">23</td>
+        <td class="num">21</td>
         <td>1×</td>
         <td>
           <span class="comp-name">Power Switch — rocker or toggle (optional)</span>
@@ -851,8 +831,8 @@
   <ol>
     <li><span class="toc-phase">PH 1</span> <a href="#ph1">Flash Meshtastic on Heltec V3</a> <span class="toc-sub">Firmware flash · Serial module config · private channel</span></li>
     <li><span class="toc-phase">PH 2</span> <a href="#ph2">Learn Your 433&nbsp;MHz Sensor Codes</a> <span class="toc-sub">Arduino sketch · Serial Monitor · record open/close codes</span></li>
-    <li><span class="toc-phase">PH 3</span> <a href="#ph3">Arduino Nano Bridge Code</a> <span class="toc-sub">433MHz receive · battery voltage · heartbeat · UART to Meshtastic</span></li>
-    <li><span class="toc-phase">PH 4</span> <a href="#ph4">Wiring — Complete Schematic</a> <span class="toc-sub">RXB6 · Nano · Heltec · Waveshare Solar D · voltage divider · BAT pin</span></li>
+    <li><span class="toc-phase">PH 3</span> <a href="#ph3">Arduino Nano Bridge Code</a> <span class="toc-sub">433MHz receive · heartbeat · UART to Meshtastic</span></li>
+    <li><span class="toc-phase">PH 4</span> <a href="#ph4">Wiring — Complete Schematic</a> <span class="toc-sub">RXB6 · Nano · Heltec · Waveshare Solar D · level shifter</span></li>
     <li><span class="toc-phase">PH 5</span> <a href="#ph5">Enclosure Assembly</a> <span class="toc-sub">IP65 box layout · SMA bulkhead · cable gland · standoffs · solar mount</span></li>
     <li><span class="toc-phase">PH 6</span> <a href="#ph6">Message Format &amp; Example Output</a> <span class="toc-sub">What arrives in the Meshtastic private channel</span></li>
     <li><span class="toc-phase">PH 7</span> <a href="#ph7">Carrier PCB — KiCad · Finalize · Fabricate</a> <span class="toc-sub">gate_sensor_pcb_v2.py · generate · DRC · copper pours · Gerbers · JLCPCB · solder guide · J4 switch</span></li>
@@ -973,7 +953,7 @@ Code: 1234560  Bits: 24  Protocol: 1   <span class="c">← gate CLOSED</span>
   <div class="phase-header">
     <span class="phase-num">Phase 3</span>
     <span class="phase-title">Arduino Nano Bridge Code</span>
-    <span class="phase-sub">433&nbsp;MHz → UART → Meshtastic · with battery monitor + heartbeat</span>
+    <span class="phase-sub">433&nbsp;MHz → UART → Meshtastic · with heartbeat</span>
   </div>
   <div class="phase-body">
 
@@ -998,40 +978,18 @@ Code: 1234560  Bits: 24  Protocol: 1   <span class="c">← gate CLOSED</span>
 <span class="n">#define</span> SENSOR_NAME   <span class="s">"Gate"</span>
 
 <span class="n">#define</span> RF_PIN        <span class="v">2</span>           <span class="c">// RXB6 DATA pin (now D2)</span>
-<span class="n">#define</span> BAT_PIN       <span class="v">A0</span>          <span class="c">// Waveshare BAT pin via divider</span>
 
 <span class="c">// Timing</span>
 <span class="n">#define</span> HEARTBEAT_MS   <span class="v">300000UL</span>  <span class="c">// 5 min heartbeat</span>
-<span class="n">#define</span> BAT_CHECK_MS    <span class="v">60000UL</span>  <span class="c">// 1 min battery check</span>
 <span class="n">#define</span> DEBOUNCE_MS       <span class="v">200UL</span>  <span class="c">// ignore retransmits</span>
-
-<span class="c">// Battery thresholds (voltage at BAT pin, before divider halving)</span>
-<span class="n">#define</span> BAT_LOW       <span class="v">3.5</span>
-<span class="n">#define</span> BAT_CRITICAL  <span class="v">3.2</span>
 
 <span class="c">// ── Objects ────────────────────────────────────────</span>
 RCSwitch rf = RCSwitch();
 SoftwareSerial meshSerial(<span class="v">4</span>, <span class="v">3</span>); <span class="c">// RX=D4(unused), TX=D3 → Heltec GPIO47</span>
 
 <span class="c">// ── State ──────────────────────────────────────────</span>
-<span class="k">unsigned long</span> lastHeartbeat  = <span class="v">0</span>;
-<span class="k">unsigned long</span> lastBatCheck   = <span class="v">0</span>;
-<span class="k">unsigned long</span> lastRFEvent    = <span class="v">0</span>;
-<span class="k">bool</span> batLowSent      = <span class="v">false</span>;
-<span class="k">bool</span> batCriticalSent = <span class="v">false</span>;
-
-<span class="c">// ── Battery reading ────────────────────────────────</span>
-<span class="k">float</span> <span class="f">readBatVoltage</span>() {
-  <span class="c">// 10k/10k divider halves the voltage; Nano ADC ref = 5V</span>
-  <span class="k">int</span> raw = <span class="f">analogRead</span>(BAT_PIN);
-  <span class="k">return</span> (raw / <span class="v">1023.0</span>) * <span class="v">5.0</span> * <span class="v">2.0</span>;
-}
-
-String <span class="f">batIcon</span>(<span class="k">float</span> v) {
-  <span class="k">if</span> (v >= <span class="v">3.8</span>) <span class="k">return</span> <span class="s">"[BATT OK]"</span>;
-  <span class="k">if</span> (v >= <span class="v">3.5</span>) <span class="k">return</span> <span class="s">"[BATT LOW]"</span>;
-  <span class="k">return</span> <span class="s">"[BATT CRIT]"</span>;
-}
+<span class="k">unsigned long</span> lastHeartbeat = <span class="v">0</span>;
+<span class="k">unsigned long</span> lastRFEvent   = <span class="v">0</span>;
 
 <span class="c">// ── Send to Meshtastic ──────────────────────────────</span>
 <span class="k">void</span> <span class="f">sendMesh</span>(String msg) {
@@ -1039,29 +997,9 @@ String <span class="f">batIcon</span>(<span class="k">float</span> v) {
   Serial.<span class="f">println</span>(<span class="s">"TX: "</span> + msg);
 }
 
-<span class="c">// ── Battery check ───────────────────────────────────</span>
-<span class="k">void</span> <span class="f">checkBattery</span>() {
-  <span class="k">float</span> v = <span class="f">readBatVoltage</span>();
-
-  <span class="k">if</span> (v &lt;= BAT_CRITICAL &amp;&amp; !batCriticalSent) {
-    <span class="f">sendMesh</span>(<span class="s">"GATE NODE: CRITICAL BATTERY "</span> + String(v, <span class="v">2</span>) + <span class="s">"V — may go offline!"</span>);
-    batCriticalSent = batLowSent = <span class="v">true</span>;
-
-  } <span class="k">else if</span> (v &lt;= BAT_LOW &amp;&amp; !batLowSent) {
-    <span class="f">sendMesh</span>(<span class="s">"GATE NODE: Low battery "</span> + String(v, <span class="v">2</span>) + <span class="s">"V — check solar"</span>);
-    batLowSent = <span class="v">true</span>;
-  }
-
-  <span class="k">if</span> (v >= <span class="v">3.8</span> &amp;&amp; batLowSent) {
-    <span class="f">sendMesh</span>(<span class="s">"GATE NODE: Battery recovered "</span> + String(v, <span class="v">2</span>) + <span class="s">"V"</span>);
-    batLowSent = batCriticalSent = <span class="v">false</span>;
-  }
-}
-
 <span class="c">// ── Heartbeat ───────────────────────────────────────</span>
 <span class="k">void</span> <span class="f">sendHeartbeat</span>() {
-  <span class="k">float</span> v = <span class="f">readBatVoltage</span>();
-  <span class="f">sendMesh</span>(<span class="s">"GATE NODE: Online "</span> + <span class="f">batIcon</span>(v) + <span class="s">" "</span> + String(v, <span class="v">2</span>) + <span class="s">"V"</span>);
+  <span class="f">sendMesh</span>(<span class="s">"GATE NODE: Online"</span>);
 }
 
 <span class="c">// ── Setup ────────────────────────────────────────────</span>
@@ -1084,19 +1022,11 @@ String <span class="f">batIcon</span>(<span class="k">float</span> v) {
     <span class="c">// debounce: ignore retransmits within 200ms</span>
     <span class="k">if</span> (now - lastRFEvent > DEBOUNCE_MS) {
       lastRFEvent = now;
-      <span class="k">float</span> v = <span class="f">readBatVoltage</span>();
-      String bat = <span class="s">" "</span> + <span class="f">batIcon</span>(v) + <span class="s">" "</span> + String(v, <span class="v">2</span>) + <span class="s">"V"</span>;
 
-      <span class="k">if</span> (code == CODE_OPEN)   <span class="f">sendMesh</span>(SENSOR_NAME + String(<span class="s">": OPEN"</span>)   + bat);
-      <span class="k">if</span> (code == CODE_CLOSED) <span class="f">sendMesh</span>(SENSOR_NAME + String(<span class="s">": CLOSED"</span>) + bat);
+      <span class="k">if</span> (code == CODE_OPEN)   <span class="f">sendMesh</span>(SENSOR_NAME + String(<span class="s">": OPEN"</span>));
+      <span class="k">if</span> (code == CODE_CLOSED) <span class="f">sendMesh</span>(SENSOR_NAME + String(<span class="s">": CLOSED"</span>));
     }
     rf.<span class="f">resetAvailable</span>();
-  }
-
-  <span class="c">// ── Battery check every 1 min ─────────────────────</span>
-  <span class="k">if</span> (now - lastBatCheck >= BAT_CHECK_MS) {
-    <span class="f">checkBattery</span>();
-    lastBatCheck = now;
   }
 
   <span class="c">// ── Heartbeat every 5 min ─────────────────────────</span>
@@ -1141,19 +1071,16 @@ String <span class="f">batIcon</span>(<span class="k">float</span> v) {
 <span class="hl2">         │                                        │</span>
 <span class="hl2">         │  5V OUT ─────────────────────────────────────────────────────┐</span>
 <span class="hl2">         │  GND    ──────────────────────────────────────────────────┐  │</span>
-<span class="hl2">         │  BAT    ──────────────────────────────────────────────┐  │  │</span>
-<span class="hl2">         └────────────────────────────────────────┘</span>          │  │  │
-                                                               │  │  │
-                        ┌──────────────────────────────────────┘  │  │
-                        │  ┌───────────────────────────────────────┘  │
-                        │  │  ┌────────────────────────────────────────┘
-                        │  │  │
-<span class="hl3">         ┌──────────────┴──┴──┴─────────────────────────────────────┐</span>
+<span class="hl2">         └────────────────────────────────────────┘</span>             │  │
+                                                                  │  │
+                        ┌─────────────────────────────────────────┘  │
+                        │  ┌──────────────────────────────────────────┘
+                        │  │
+<span class="hl3">         ┌──────────────┴──┴───────────────────────────────────────┐</span>
 <span class="hl3">         │                   Arduino Nano                           │</span>
 <span class="hl3">         │                                                          │</span>
 <span class="hl3">         │  5V (R12) ◄── 5V (from Waveshare 5V OUT)                │</span>
 <span class="hl3">         │  GND  ◄─────── GND (shared)                              │</span>
-<span class="hl3">         │  A0   ◄─────── BAT pin via 10k/10k voltage divider       │</span>
 <span class="hl3">         │  D2 (INT0) ◄── RXB6 DATA                                 │</span>
 <span class="hl3">         │  D3 (TX) ──── [2k2] ──┬──► Heltec GPIO47 (RXD)           │</span>
 <span class="hl3">         │                      [3k3]    (3.0V logic)              │</span>
@@ -1177,17 +1104,6 @@ String <span class="f">batIcon</span>(<span class="k">float</span> v) {
 <span class="hl">         │  GND  ◄─────── GND (shared)                              │</span>
 <span class="hl">         │  DATA ──────► Nano D2 (INT0)                                    │</span>
 <span class="hl">         └──────────────────────────────────────────────────────────┘</span>
-
-         ┌──────────────────────────────────────────────────────────┐
-         │    BAT Pin Voltage Divider (10kΩ / 10kΩ)                 │
-         │                                                          │
-         │    Waveshare BAT ──── 10kΩ ────┬──── Nano A0             │
-         │                               10kΩ                       │
-         │                                │                         │
-         │                               GND                        │
-         │                                                          │
-         │    Max BAT voltage: 4.2V → A0 sees 2.1V (safe for 5V)    │
-         └──────────────────────────────────────────────────────────┘
 
          Logic Level Divider — Nano TX (5V) → Heltec GPIO47 (3.3V max):
 
@@ -1307,20 +1223,16 @@ String <span class="f">batIcon</span>(<span class="k">float</span> v) {
   </div>
   <div class="phase-body">
 
-    <p style="color:var(--text2);font-size:13px;margin-bottom:14px;">All messages appear in your private Meshtastic channel. The format includes sensor name, state, battery icon, and live battery voltage:</p>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:14px;">All messages appear in your private Meshtastic channel. The format includes sensor name and state:</p>
 
     <div class="enclosure-wrap">
       <div class="enclosure-caption">Private channel — example messages</div>
       <div class="diagram" style="padding:16px 20px;">
-<span class="hl">Gate: OPEN [BATT OK] 4.02V</span>          <span class="hl2">← gate opened — battery full</span>
-<span class="hl">Gate: CLOSED [BATT OK] 4.01V</span>        <span class="hl2">← gate closed</span>
-GATE NODE: Online [BATT OK] 3.95V  <span class="hl2">← heartbeat every 5 min</span>
-GATE NODE: Online [BATT OK] 3.88V  <span class="hl2">← heartbeat</span>
-<span class="hl3">GATE NODE: Low battery 3.48V — check solar</span>   <span class="hl2">← alert: check panel</span>
-GATE NODE: Online [BATT LOW] 3.46V <span class="hl2">← heartbeat during low bat</span>
-<span class="hl3">GATE NODE: CRITICAL BATTERY 3.21V — may go offline!</span>
-<span class="hl">GATE NODE: Battery recovered 3.84V</span>  <span class="hl2">← sun came out / charged</span>
-<span class="hl">Gate: OPEN [BATT OK] 3.91V</span>
+<span class="hl">Gate: OPEN</span>              <span class="hl2">← gate opened</span>
+<span class="hl">Gate: CLOSED</span>            <span class="hl2">← gate closed</span>
+GATE NODE: Online       <span class="hl2">← heartbeat every 5 min</span>
+GATE NODE: Online       <span class="hl2">← heartbeat</span>
+<span class="hl">Gate: OPEN</span>              <span class="hl2">← another event</span>
       </div>
     </div>
 
@@ -1362,11 +1274,7 @@ GATE NODE: Online [BATT LOW] 3.46V <span class="hl2">← heartbeat during low ba
 
   R1  2.2 kΩ  THT axial    D3 → logic level junction
   R2  3.3 kΩ  THT axial    logic level junction → GND
-  R3  10 kΩ   THT axial    BAT_RAW → BAT_DIV junction
-  R4  10 kΩ   THT axial    BAT_DIV junction → GND
-
   J2  5V IN    2-pin screw terminal 5.08 mm    +5V / GND from Waveshare
-  J3  BAT IN   2-pin screw terminal 5.08 mm    BAT+ / GND from Waveshare
   J4  PWR SW   JST-PH 2-pin 2.0 mm             inline power switch
 
   MH1–MH4  M3 non-plated mounting holes at corners
@@ -1426,8 +1334,8 @@ PYTHONPATH="/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/V
       <ul>
         <li>All three component outlines visible — Heltec socket (top-left), Nano socket (right), RXB6 (lower-center)</li>
         <li>USB-C notch visible as a rectangular cutout at the top edge between the Heltec rows</li>
-        <li>J2, J3, J4 visible along the bottom edge</li>
-        <li>R1–R4 visible between Heltec right row and Nano left row</li>
+        <li>J2, J4 visible along the bottom edge</li>
+        <li>R1–R2 visible between Heltec right row and Nano left row</li>
         <li>Silkscreen labels on all pins (use View → Show Layers → F.SilkS to toggle)</li>
         <li>Copper traces visible in red (F.Cu) connecting the key nets</li>
       </ul>
@@ -1544,7 +1452,7 @@ PYTHONPATH="/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/V
             <td>Axial through-hole. Bend leads, insert, solder, trim flush. Verify values with multimeter before inserting.</td>
           </tr>
           <tr>
-            <td>J2, J3 (screw terminals)</td>
+            <td>J2 (screw terminal)</td>
             <td><strong>Solder direct</strong></td>
             <td>Push flat against PCB. Solder from below. Open screws face outward (toward board edge).</td>
           </tr>
@@ -1652,10 +1560,7 @@ Search: "JST PH 2pin inline switch"
           <td>Heltec not detected by Meshtastic app after flash</td>
           <td>Hold the Heltec BOOT button while pressing RST to force DFU mode, then reflash. Some V3 boards need a full erase first — in the web flasher check <em>Full Erase</em> before flashing.</td>
         </tr>
-        <tr>
-          <td>Battery voltage reads 0V or nonsense on A0</td>
-          <td>Confirm the Waveshare Solar Manager D BAT pin is wired through the 10k/10k divider to Nano A0. Check that the divider has a common GND connection. Measure BAT pin voltage directly with a multimeter first (should be 3.3–4.2V when charged).</td>
-        </tr>
+
         <tr>
           <td>No solar charging / Waveshare LED always red</td>
           <td>Verify solar panel is 6V (not 5V or 12V). Check polarity — reverse polarity protection exists but still confirm + / −. Measure panel voltage in sunlight: should be 5.5–6.5V open circuit. Shade or winter conditions may reduce to 3–4V — insufficient for MPPT.</td>

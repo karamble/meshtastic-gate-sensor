@@ -21,8 +21,6 @@
 |-----|-------|------|---------|
 | R1 | 2.2k | 1/4W axial | Logic level divider — series resistor (D3 to HELTEC_RX) |
 | R2 | 3.3k | 1/4W axial | Logic level divider — shunt to GND (produces 3.0V from 5V) |
-| R3 | 10k | 1/4W axial | Battery voltage divider — series (BAT_RAW to BAT_DIV) |
-| R4 | 10k | 1/4W axial | Battery voltage divider — shunt to GND (BAT/2 to A0) |
 | R5 | 10k | 1/4W axial | DE pull-up — holds RXB6 data enable pin high via 5V |
 | C1 | 100nF | Ceramic disc/MLCC | Bypass capacitor near RXB6 VDD (high-frequency noise filter) |
 | C2 | 100uF | Electrolytic radial (6.3mm dia) | Bulk capacitor on 5V bus (inrush/ripple smoothing) |
@@ -33,7 +31,7 @@
 |---|-----------|---------|
 | 1 | 2x18 female pin headers (2.54mm) | Heltec socket |
 | 2 | 2x15 female pin headers (2.54mm, 15.24mm spacing) | Nano socket |
-| 3 | 2x 2-pin screw terminals (5.08mm) | J2 (PWR IN), J3 (BAT MON) |
+| 3 | 2-pin screw terminal (5.08mm) | J2 (PWR IN) |
 | 4 | JST-PH 2mm 2-pin connector | J4 (power switch) |
 | 5 | Toggle switch or JST-PH jumper | Inline power switch for J4 |
 | 6 | SMA female bulkhead connector | 433MHz antenna feedthrough |

@@ -17,7 +17,7 @@ v2.1 changes (from expert DRC review):
   - GND drops routed on B.Cu via vias (eliminates track crossings)
   - D4 signal routed via B.Cu (fixes D4/GND short at RXB6)
   - 3V3 bus rerouted above components (fixes 3V3/pad shorts)
-  - V5 feed and BAT_RAW use B.Cu to cross GND bus
+  - V5 feed uses B.Cu to cross GND bus
   - All text >= 0.8mm height, 0.15mm stroke (JLCPCB minimum)
   - Verbose notes moved to F.Fab layer
   - Added B.Mask and B.SilkS layers
@@ -38,8 +38,8 @@ def _build():
         if name not in _nets: _nid[0] += 1; _nets[name] = _nid[0]
         return name
     GND = N("GND"); V5 = N("5V"); V5_IN = N("5V_IN"); V33 = N("3V3")
-    D3_NET = N("D3"); D2_NET = N("D2"); BAT_DIV = N("BAT_DIV")
-    BAT_RAW = N("BAT_RAW"); HLTC_RX = N("HELTEC_RX"); DE_NET = N("DE")
+    D3_NET = N("D3"); D2_NET = N("D2")
+    HLTC_RX = N("HELTEC_RX"); DE_NET = N("DE")
 
     _body = []
     def emit(s): _body.append(s)
@@ -181,13 +181,9 @@ def _build():
 
     for i, lb in enumerate(HL_LBLS):
         txt(lb, HLTC_XL - 5.0, HLTC_Y0 + i*P - 0.33)
-    # R-column labels — move pins near R1/R2 (Y=23-31) to F.Fab
+    # R-column labels — all on F.SilkS (R1/R2 moved right, clears pins 40-42)
     for i, lb in enumerate(HR_LBLS):
-        pin_y = HLTC_Y0 + i*P
-        if 23.0 < pin_y < 31.0:
-            txt(lb, HLTC_XR + 3.5, pin_y - 0.33, layer="F.Fab")
-        else:
-            txt(lb, HLTC_XR + 3.5, pin_y - 0.33)
+        txt(lb, HLTC_XR + 3.5, HLTC_Y0 + i*P - 0.33)
 
     # ══════════════════════════════════════════════════════
     #  U1 — ARDUINO NANO  (2 x 15 pins)
@@ -203,7 +199,7 @@ def _build():
     # shorting VIN to 5V feeds regulator output back to input.
     # R2 (3V3) left unconnected — Nano has its own 3.3V regulator,
     # connecting Heltec 3V3 would cause regulator contention.
-    NR_NETS = [None, None, None, BAT_DIV, None, None, None,
+    NR_NETS = [None, None, None, None, None, None, None,
                None, None, None, None, V5, None, GND, None]
     NR_LBLS = ["D13","3V3","REF","A0","A1","A2","A3",
                "A4","A5","A6","A7","5V","RST","GND","VIN"]
@@ -282,8 +278,8 @@ def _build():
     A0_Y = NANO_Y0 + 3*P    # 19.62
 
     # R1 (2.2 k) — series, logic level divider
-    # Shifted left to clear RXB6 module body (starts at X=42)
-    R1_X1, R1_X2, R1_Y = 39.0, 39.0 - 5.08, D3_Y
+    # Shifted right 2mm from v2.2 to clear Heltec R-column silk labels (pins 40-42)
+    R1_X1, R1_X2, R1_Y = 41.0, 41.0 - 5.08, D3_Y
     r1 = new_fp("R1", "2.2k", (R1_X1+R1_X2)/2, R1_Y)
     r1.pad("1", R1_X1, R1_Y, 0.8, 1.6, D3_NET, True)
     r1.pad("2", R1_X2, R1_Y, 0.8, 1.6, HLTC_RX)
@@ -298,22 +294,6 @@ def _build():
     r2.pad("2", R2_X, R2_Y2, 0.8, 1.6, GND)
     fab_box(R2_X - 1.4, R2_Y1 - 1.0, R2_X + 1.4, R2_Y2 + 1.0)
     txt("R2 3k3", R2_X + 2.0, (R2_Y1+R2_Y2)/2 - 0.33)
-
-    # R3 (10 k) — series, battery divider (horizontal, below Nano)
-    R3_X1, R3_X2, R3_Y = 65.0, 59.92, 50.0  # pad1=BAT_RAW at (65,50), pad2=BAT_DIV at (59.92,50)
-    r3 = new_fp("R3", "10k", (R3_X1+R3_X2)/2, R3_Y)
-    r3.pad("1", R3_X1, R3_Y, 0.8, 1.6, BAT_RAW, True)
-    r3.pad("2", R3_X2, R3_Y, 0.8, 1.6, BAT_DIV)
-    fab_box(R3_X2 - 1.2, R3_Y - 1.4, R3_X1 + 1.2, R3_Y + 1.4)
-    txt("R3 10k", R3_X2 - 3.0, R3_Y + 2.5)
-
-    # R4 (10 k) — shunt, battery divider (vertical, below R3)
-    R4_X, R4_Y1, R4_Y2 = 59.92, 51.1, 56.18  # pad1=BAT_DIV at (59.92,51.1), pad2=GND at (59.92,56.18)
-    r4 = new_fp("R4", "10k", R4_X, (R4_Y1+R4_Y2)/2)
-    r4.pad("1", R4_X, R4_Y1, 0.8, 1.6, BAT_DIV, True)
-    r4.pad("2", R4_X, R4_Y2, 0.8, 1.6, GND)
-    fab_box(R4_X - 1.4, R4_Y1 - 1.0, R4_X + 1.4, R4_Y2 + 1.0)
-    txt("R4 10k", R4_X + 2.5, (R4_Y1+R4_Y2)/2 - 0.33)
 
     # ══════════════════════════════════════════════════════
     #  R5, C1, C2  Hardening components
@@ -340,62 +320,50 @@ def _build():
     fab_box(C1_X1 - 1.0, C1_Y - 1.4, C1_X2 + 1.0, C1_Y + 1.4)
     txt("C1 100nF", C1_X1, C1_Y - 3.0)
 
-    # C2 (100µF) — bulk electrolytic near J4, straddles V5 and GND buses
-    C2_X = 20.0; C2_Y1 = 55.0; C2_Y2 = 57.0  # straddles V5 bus (55) and GND bus (57)
+    # C2 (100µF) — bulk electrolytic, between J2 and J4 (spaced to clear screw terminal body)
+    C2_X = 25.0; C2_Y1 = 59.0; C2_Y2 = 61.0
     c2 = new_fp("C2", "100uF", C2_X, (C2_Y1+C2_Y2)/2)
     c2.pad("1", C2_X, C2_Y1, 0.8, 1.6, V5, True)  # + (positive)
     c2.pad("2", C2_X, C2_Y2, 0.8, 1.6, GND)         # - (negative)
-    fab_box(C2_X - 3.5, C2_Y1 - 1.5, C2_X + 3.5, C2_Y2 + 1.5)  # 6.3mm diameter
-    txt("C2 100uF", C2_X - 5.0, (C2_Y1+C2_Y2)/2 - 0.33)
+    fab_box(C2_X - 2.8, C2_Y1 - 1.2, C2_X + 2.8, C2_Y2 + 1.2)  # 5mm cap body
+    txt("C2 100uF", C2_X, C2_Y2 + 2.0)
     txt("+", C2_X - 1.5, C2_Y1 - 0.33, layer="F.Fab")
 
     # ══════════════════════════════════════════════════════
-    #  J2, J3, J4  Connectors
+    #  J2, J3  Screw terminals (5.08mm pitch, Waveshare Solar Power Manager D)
+    #  J4     JST PH 2-pin (2mm pitch, power switch)
     # ══════════════════════════════════════════════════════
     J2_X0, J2_Y = 12.0, 62.0
-    j2 = new_fp("J2", "PWR_IN", J2_X0 + 2.54, J2_Y)
+    j2 = new_fp("J2", "PWR_IN_ScrewTerm", J2_X0 + 2.54, J2_Y)
     j2.pad("1", J2_X0, J2_Y, 1.2, 2.4, V5_IN, True)
     j2.pad("2", J2_X0 + 5.08, J2_Y, 1.2, 2.4, GND)
-    silk_box(J2_X0 - 2.2, J2_Y - 3.0, J2_X0 + 7.3, J2_Y + 2.5)
-    txt("SOLAR IN", J2_X0 - 1.0, J2_Y - 4.0)
-    txt("+5V", J2_X0 - 1.0, J2_Y + 3.0)
-    txt("GND", J2_X0 + 3.58, J2_Y + 3.0)
+    silk_box(J2_X0 - 2.5, J2_Y - 3.0, J2_X0 + 7.5, J2_Y + 2.5)
+    txt("5V IN", J2_X0 + 2.54, J2_Y - 4.0)
+    txt("+5V", J2_X0 - 0.5, J2_Y + 3.5)
+    txt("GND", J2_X0 + 4.0, J2_Y + 3.5)
 
-    J3_X0, J3_Y = 60.0, 62.0
-    j3 = new_fp("J3", "BAT_IN", J3_X0 + 2.54, J3_Y)
-    j3.pad("1", J3_X0, J3_Y, 1.2, 2.4, BAT_RAW, True)
-    j3.pad("2", J3_X0 + 5.08, J3_Y, 1.2, 2.4, GND)
-    silk_box(J3_X0 - 2.2, J3_Y - 3.0, J3_X0 + 7.3, J3_Y + 2.5)
-    txt("BATTERY", J3_X0 - 1.0, J3_Y - 4.0)
-    txt("BAT+", J3_X0 - 1.0, J3_Y + 3.0)
-    txt("GND", J3_X0 + 3.58, J3_Y + 3.0)
-
-    J4_X0, J4_Y = 26.0, 62.0
+    J4_X0, J4_Y = 34.0, 62.0
     j4 = new_fp("J4", "PWR_SW_JST_PH_2pin", J4_X0 + 1.0, J4_Y)
     j4.pad("1", J4_X0, J4_Y, 0.8, 1.6, V5_IN, True)
     j4.pad("2", J4_X0 + 2.0, J4_Y, 0.8, 1.6, V5)
-    silk_box(J4_X0 - 1.4, J4_Y - 2.0, J4_X0 + 3.4, J4_Y + 2.0)
+    # No silk_box — pads too close for right edge to pass between without mask clipping
     # Switch symbol
-    silk(J4_X0 - .5, J4_Y - 3.4, J4_X0 + 2.5, J4_Y - 3.4)
-    silk(J4_X0 - .5, J4_Y - 3.4, J4_X0 + .5, J4_Y - 4.2)
-    silk(J4_X0 + 2.5, J4_Y - 3.4, J4_X0 + 1.5, J4_Y - 4.2)
-    txt("PWR SW", J4_X0 - 1.0, J4_Y - 5.0)
-    txt("IN", J4_X0 - 1.0, J4_Y + 3.0)
-    txt("OUT", J4_X0 + 1.0, J4_Y + 3.0)
+    silk(J4_X0 - .5, J4_Y - 3.8, J4_X0 + 2.5, J4_Y - 3.8)
+    silk(J4_X0 - .5, J4_Y - 3.8, J4_X0 + .5, J4_Y - 4.6)
+    silk(J4_X0 + 2.5, J4_Y - 3.8, J4_X0 + 1.5, J4_Y - 4.6)
+    txt("PWR SW", J4_X0 + 1.0, J4_Y - 5.5)
+    txt("IN  OUT", J4_X0 + 1.0, J4_Y + 3.5)
 
     # ══════════════════════════════════════════════════════
     #  SILKSCREEN — Title & notes
     # ══════════════════════════════════════════════════════
-    txt("GATE SENSOR CARRIER v2.2", 42, 4.0, size=1.1)
+    txt("GATE SENSOR CARRIER v2.3", 42, 4.0, size=1.1)
     txt("75x66mm  2L  1.6mm  HASL", 42, 6.0)
 
     # Verbose circuit notes on F.Fab (not silk)
     note_x = (HLTC_XR + NANO_XL) / 2
     txt("LOGIC LEVEL: D3->R1(2k2)->R2(3k3)->GND, jct->GPIO47",
         note_x - 10, D3_Y - 5, layer="F.Fab")
-    txt("BAT DIVIDER: BAT->R3(10k)->R4(10k)->GND, jct->A0",
-        R3_X2 - 2, R3_Y - 3.5, layer="F.Fab")
-
     txt("All boards removable except U2 (RXB6 direct solder)",
         5, BH - 2.0, layer="F.Fab")
 
@@ -405,13 +373,14 @@ def _build():
     if os.path.exists(logo_path):
         with open(logo_path) as lf:
             logo = json.load(lf)
+        LOGO_DX = 6.0  # shift logo right to clear J4 pad2
         for x1, y1, x2, y2 in logo["lines"]:
-            silk(x1, y1, x2, y2, logo["line_width"])
+            silk(x1 + LOGO_DX, y1, x2 + LOGO_DX, y2, logo["line_width"])
 
     # Text beside logo (0.7mm to fit without overlapping nearby labels)
-    txt("GoTailMe.com", 48.0, 59.5, size=0.7)
-    txt("Meshtastic Gate", 48.0, 60.7, size=0.7)
-    txt("and Door Sensor", 48.0, 61.9, size=0.7)
+    txt("GoTailMe.com", 54.0, 59.5, size=0.7)
+    txt("Meshtastic Gate", 54.0, 60.7, size=0.7)
+    txt("and Door Sensor", 54.0, 61.9, size=0.7)
 
     # ══════════════════════════════════════════════════════
     #  ROUTING
@@ -429,7 +398,6 @@ def _build():
     HLTC_RX_Y    = HLTC_Y0 + 12*P     # L13 = GPIO47 = 40.48 (serial RX)
     HLTC_GND_R1_Y = HLTC_Y0           # R1 = GND = 10.0
     NANO_3V3_Y   = NANO_Y0 + P        # R2  = 14.54
-    NANO_A0_Y    = NANO_Y0 + 3*P      # R4  = 19.62
     NANO_GND_L_Y = NANO_Y0 + 3*P      # L4  = 19.62
     NANO_5V_Y    = NANO_Y0 + 11*P     # R12 = 39.94
     NANO_GND_R_Y = NANO_Y0 + 13*P     # R14 = 45.02
@@ -441,8 +409,7 @@ def _build():
     GND_HLTC_R_X = 32.5   # offset right of Heltec R column (29.86)
     GND_NANO_L_X = 52.5   # offset left of Nano L column (55.0)
     GND_NANO_R_X = 68.0   # offset left of Nano R column (70.24), between Nano L and R
-    GND_R2_X     = 36.0   # offset left of R2 pad (39.92), clear of HELTEC_RX at 38.0
-    GND_R4_X     = 57.0   # offset left of R4 pad (59.92), R4 now below Nano
+    GND_R2_X     = 38.0   # offset right of R2 pad (35.92), clear of HELTEC_RX routing
 
     # ── GND BUS (F.Cu, spans all connection points) ────────
     trk(GND_HLTC_L_X, GND_BUS_Y, GND_NANO_R_X, GND_BUS_Y, GND, "F.Cu", GW)
@@ -480,35 +447,24 @@ def _build():
     gnd_drop_offset(RXB6_X + 2.5, RXB6_PIN_Y[2], RXB6_X + 2.5, S)
     # Pins 2, 3 also GND — connected via copper pour
 
-    # R2 shunt GND (33.92, 29.78) → offset right to X=36, B.Cu down
+    # R2 shunt GND (35.92, 29.78) → offset right to X=38, B.Cu down
     gnd_drop_offset(R2_X, R2_Y2, GND_R2_X, S)
-    # R4 shunt GND (59.92, 56.18) → direct short drop to GND bus at Y=57
-    # Only 0.82mm drop, no via needed — direct F.Cu to GND bus
-    trk(R4_X, R4_Y2, R4_X, GND_BUS_Y, GND, "F.Cu", S)
 
-    # J2 pin2 GND — direct F.Cu (short drop, no crossings)
+    # J2 pin2 GND (screw terminal, 5.08mm pitch) — direct F.Cu drop to GND bus
     trk(J2_X0 + 5.08, J2_Y, J2_X0 + 5.08, GND_BUS_Y, GND, "F.Cu", PW)
-    # J3 pin2 GND — direct F.Cu
-    trk(J3_X0 + 5.08, J3_Y, J3_X0 + 5.08, GND_BUS_Y, GND, "F.Cu", PW)
-    # Note: J3 is now at X=60, so J3 GND pin at X=65.08 is within board
 
     # ── V5 BUS (F.Cu) ──
     # Heltec L2 (5V) at (7.0, 12.54) → jog left to X=3.0, then down to V5 bus
     trk(HLTC_XL, HLTC_5V_Y, 3.0, HLTC_5V_Y, V5, "F.Cu", PW)
     trk(3.0, HLTC_5V_Y, 3.0, V5_BUS_Y, V5, "F.Cu", PW)
-    # V5 bus with notch around R4 pad2 (59.92, 56.18) — pad edge at Y=55.38
-    # Split into two segments with a jog up at X=57.5..62.5 to clear R4
-    trk(3.0, V5_BUS_Y, 57.5, V5_BUS_Y, V5, "F.Cu", PW)      # left portion
-    trk(57.5, V5_BUS_Y, 57.5, 54.0, V5, "F.Cu", PW)          # jog up
-    trk(57.5, 54.0, 62.5, 54.0, V5, "F.Cu", PW)              # across above R4
-    trk(62.5, 54.0, 62.5, V5_BUS_Y, V5, "F.Cu", PW)          # jog back down
-    trk(62.5, V5_BUS_Y, 73.0, V5_BUS_Y, V5, "F.Cu", PW)     # right portion
+    # V5 bus — straight run (R4 removed, no notch needed)
+    trk(3.0, V5_BUS_Y, 73.0, V5_BUS_Y, V5, "F.Cu", PW)
 
-    # V5 bus feed from J4 pin2 — jog right past R column, B.Cu to bus
-    trk(J4_X0 + 2, J4_Y, 34.0, J4_Y, V5, "F.Cu", PW)
-    via_hole(34.0, J4_Y, V5)
-    trk(34.0, J4_Y, 34.0, V5_BUS_Y, V5, "B.Cu", PW)
-    via_hole(34.0, V5_BUS_Y, V5)
+    # V5 bus feed from J4 pin2 — via at X=40 to avoid GND_R2 B.Cu at X=38
+    trk(J4_X0 + 2, J4_Y, 40.0, J4_Y, V5, "F.Cu", PW)
+    via_hole(40.0, J4_Y, V5)
+    trk(40.0, J4_Y, 40.0, V5_BUS_Y, V5, "B.Cu", PW)
+    via_hole(40.0, V5_BUS_Y, V5)
     # Note: V5 bus endpoint at X=73.0, within 75mm board
 
     # V5 to Nano R12 — via B.Cu to avoid crossing R14 GND stub on F.Cu
@@ -562,29 +518,6 @@ def _build():
     trk(5.5, HLTC_RX_GAP_Y, 5.5, HLTC_RX_Y, HLTC_RX, "F.Cu", S)  # down to L13 Y
     trk(5.5, HLTC_RX_Y, HLTC_XL, HLTC_RX_Y, HLTC_RX, "F.Cu", S)  # right to L13 pad
 
-    # ── BAT_DIV (R3 pad2 → Nano A0) ────────────────────
-    # R3 pad2 at (59.92, 50), Nano A0 at (NANO_XR=70.24, 19.62)
-    # Route up from R3 pad2 on F.Cu, then via B.Cu at X=57.5 (left channel, clear of all pads),
-    # up to A0 Y, then F.Cu right across to Nano A0.
-    trk(R3_X2, R3_Y, R3_X2, 47.5, BAT_DIV, "F.Cu", S)              # up from R3 pad2
-    trk(R3_X2, 47.5, 57.5, 47.5, BAT_DIV, "F.Cu", S)               # left to X=57.5
-    via_hole(57.5, 47.5, BAT_DIV)
-    trk(57.5, 47.5, 57.5, NANO_A0_Y, BAT_DIV, "B.Cu", S)           # up on B.Cu (left of Nano L pads)
-    via_hole(57.5, NANO_A0_Y, BAT_DIV)
-    trk(57.5, NANO_A0_Y, NANO_XR, NANO_A0_Y, BAT_DIV, "F.Cu", S)   # right across to A0 pad
-
-    # ── BAT_RAW (J3 pin1 → R3 pad1) ──
-    # J3 pin1 at (60, 62), R3 pad1 at (65, 50).
-    # J3 pin2 GND is at (65.08, 62) — cannot route through that area on F.Cu.
-    # Route: up from J3 on F.Cu, via to B.Cu, up to R3 pad1 Y, via back, jog right to R3 pad1.
-    # Use X=63.0 for B.Cu vertical (clear of GND drop at X=68 and Nano pads).
-    trk(J3_X0, J3_Y, 63.0, J3_Y, BAT_RAW, "F.Cu", S)         # right on F.Cu to X=63
-    trk(63.0, J3_Y, 63.0, 59.0, BAT_RAW, "F.Cu", S)          # up to Y=59 (above GND bus)
-    via_hole(63.0, 59.0, BAT_RAW)
-    trk(63.0, 59.0, 63.0, R3_Y, BAT_RAW, "B.Cu", S)          # up on B.Cu
-    via_hole(63.0, R3_Y, BAT_RAW)
-    trk(63.0, R3_Y, R3_X1, R3_Y, BAT_RAW, "F.Cu", S)         # right to R3 pad1
-
     # ── R5 DE pull-up (R5 pad2 → RXB6 pin 6) ──────────
     trk(R5_X2, R5_Y, RXB6_X, RXB6_PIN_Y[5], DE_NET, "F.Cu", S)
     # R5 pad1 (V5) connects to V5 bus via copper pour or trace
@@ -597,7 +530,15 @@ def _build():
     # C1 GND pad connects to RXB6 GND pin 2 area
     trk(C1_X2, C1_Y, RXB6_X, RXB6_PIN_Y[1], GND, "F.Cu", S)
 
-    # ── C2 bulk cap — pads sit directly on V5 and GND buses, no extra routing needed
+    # ── C2 bulk cap — V5 jogs right to avoid GND, GND jogs left
+    # V5: pad1 (20,58) → right to X=22 → via → B.Cu up to V5 bus → via
+    trk(C2_X, C2_Y1, C2_X + 2.0, C2_Y1, V5, "F.Cu", PW)     # jog right
+    via_hole(C2_X + 2.0, C2_Y1, V5)
+    trk(C2_X + 2.0, C2_Y1, C2_X + 2.0, V5_BUS_Y, V5, "B.Cu", PW)
+    via_hole(C2_X + 2.0, V5_BUS_Y, V5)
+    # GND: pad2 (20,60) → left to X=18 → up to GND bus
+    trk(C2_X, C2_Y2, C2_X - 2.0, C2_Y2, GND, "F.Cu", PW)    # jog left
+    trk(C2_X - 2.0, C2_Y2, C2_X - 2.0, GND_BUS_Y, GND, "F.Cu", PW)
 
     # ══════════════════════════════════════════════════════
     #  GND COPPER POUR (both layers)

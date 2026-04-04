@@ -5,7 +5,7 @@
 
 | Parameter | Value |
 |-----------|-------|
-| Dimensions | 90 x 75 mm |
+| Dimensions | 75 x 66 mm |
 | Layers | 2 (F.Cu + B.Cu) |
 | Material | FR-4 |
 | Thickness | 1.6 mm |
@@ -37,9 +37,9 @@ cd pcb && python3 gate_sensor_pcb_v2.py
     │                                     │  75mm
     │  U3 Heltec    U2 RXB6   U1 Nano    │
     │                                     │
-    │  C2   J4-sw   J3-BAT    J2-PWR     │
+    │  C2   J4-sw              J2-PWR    │
     └─────────────────────────────────────┘
-                     90mm
+                     75mm
 ```
 
 ## Component Placement
@@ -58,11 +58,9 @@ cd pcb && python3 gate_sensor_pcb_v2.py
 |-----|-----------|----------|-------|
 | R1 | 2.2k (logic divider series) | X=34-39, Y=24.7 | Horizontal, between RXB6 and Nano |
 | R2 | 3.3k (logic divider shunt) | X=34, Y=25.8-29.8 | Vertical, below R1 junction |
-| R3 | 10k (battery divider series) | X=75-80, Y=19.6 | Horizontal, right of Nano |
-| R4 | 10k (battery divider shunt) | X=75, Y=20.7-24.7 | Vertical, below R3 junction |
 | R5 | 10k (DE pull-up) | X=37.5-42.6, Y=47.6 | Horizontal, left of RXB6 pin 6 |
 | C1 | 100nF ceramic (bypass) | X=38-40.5, Y=16 | Horizontal, near RXB6 VDD |
-| C2 | 100uF electrolytic (bulk) | X=20, Y=56-58 | Vertical, on V5/GND buses |
+| C2 | 100uF electrolytic (bulk) | X=20, Y=59-61 | Vertical, below V5/GND buses |
 
 ### Connectors (bottom of board, Y=68)
 
@@ -70,7 +68,6 @@ cd pcb && python3 gate_sensor_pcb_v2.py
 |-----|-----------|----------|-------|
 | J2 | PWR IN (screw terminal) | X=8, Y=68 | 5V + GND from Waveshare |
 | J4 | PWR switch (JST-PH 2mm) | X=26, Y=68 | Toggle switch inline with 5V |
-| J3 | BAT MON (screw terminal) | X=68, Y=68 | BAT+ and GND from Waveshare |
 
 ## Routing Strategy
 
@@ -78,7 +75,7 @@ cd pcb && python3 gate_sensor_pcb_v2.py
 
 Used for all signal traces and most power traces:
 
-- **Signal traces** (0.25mm): D3 to R1, HELTEC_RX from R1/R2 junction to GPIO47, BAT_DIV from R3/R4 junction to Nano A0, DE from R5 to RXB6
+- **Signal traces** (0.25mm): D3 to R1, HELTEC_RX from R1/R2 junction to GPIO47, DE from R5 to RXB6
 - **Power traces** (0.50mm): V5 bus (horizontal, Y=56), GND bus (horizontal, Y=58, 0.60mm wide), V5_IN from J2 to J4, 5V drops to modules
 - **3V3**: Short bridge between Heltec R2 and R3 only
 
@@ -91,7 +88,6 @@ Used for GND drops and traces that must cross F.Cu signals:
 - **V5 to Nano**: B.Cu vertical at X=76.78 (avoids crossing R14 GND stub)
 - **V5 to RXB6**: B.Cu vertical at X=50 (between GND drops)
 - **D4/RF signal**: B.Cu from X=48 (avoids crossing D3 trace)
-- **BAT_RAW**: B.Cu from J3 area up to R3 (crosses GND bus)
 
 ### GND Drop Strategy
 
@@ -104,7 +100,6 @@ Through-hole pads have copper on both layers. B.Cu GND drops are offset from pad
 | Nano L4 | 55.0 | 52.5 | Left |
 | Nano R14 | 72.78 | 79.0 | Right |
 | R2 GND | 33.92 | 36.0 | Right |
-| R4 GND | 75.54 | 85.0 | Right |
 | RXB6 pin 8 | 44.0 | 41.5 | Left |
 | RXB6 pins 2-3 | 44.0 | 46.5 | Right |
 
@@ -164,8 +159,8 @@ make pcb-upgrade  # upgrade to KiCad 10 format
 
 - Component outlines and reference designators on F.SilkS
 - Pin labels for all module pins (moved to F.Fab where they overlap copper)
-- Title block: "GATE SENSOR CARRIER v2.2 / 75x66mm 2L 1.6mm HASL"
-- Connector polarity markings (+5V, GND, BAT+)
+- Title block: "GATE SENSOR CARRIER v2.3 / 75x66mm 2L 1.6mm HASL"
+- Connector polarity markings (+5V, GND)
 - Switch symbol on J4
 - Verbose circuit notes on F.Fab (not visible on assembled board)
 

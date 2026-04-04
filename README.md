@@ -19,7 +19,6 @@ Custom 75x66mm 2-layer carrier board with:
 - Arduino Nano socket (2x15 pins)
 - RXB6 433MHz receiver (8-pin SIP, direct solder)
 - Logic level divider (5V → 3.0V for UART)
-- Battery voltage divider (BAT/2 for ADC monitoring)
 - Hardening: DE pull-up, bypass cap, bulk cap
 - GND copper pour on both layers
 - 0 DRC violations
@@ -54,7 +53,7 @@ make monitor        # serial monitor
 ├── firmware/
 │   ├── platformio.ini
 │   ├── src/main.cpp           # bridge firmware
-│   └── include/config.h       # sensor codes, pin defs, thresholds
+│   └── include/config.h       # sensor codes, pin defs, timing
 ├── docs/
 │   ├── schematic.md           # full schematic description
 │   ├── pcb.md                 # PCB design documentation

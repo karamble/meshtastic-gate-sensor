@@ -17,11 +17,9 @@
 
 Solder components in this order (smallest to largest, inside to outside):
 
-1. **Passive components (R1-R5, C1)**
+1. **Passive components (R1, R2, R5, C1)**
    - R1 (2.2k) — horizontal, between Nano and RXB6 areas
    - R2 (3.3k) — vertical, below R1 junction
-   - R3 (10k) — horizontal, right of Nano area
-   - R4 (10k) — vertical, below R3 junction
    - R5 (10k) — horizontal, left of RXB6 pin 6 area (DE pull-up)
    - C1 (100nF ceramic) — horizontal, near RXB6 VDD area
 
@@ -35,7 +33,6 @@ Solder components in this order (smallest to largest, inside to outside):
 
 6. **Connectors**
    - J2 (PWR IN) — 2-pin screw terminal at bottom left. Pin 1 = +5V, Pin 2 = GND.
-   - J3 (BAT MON) — 2-pin screw terminal at bottom right. Pin 1 = BAT+, Pin 2 = GND.
    - J4 (PWR SW) — JST-PH 2mm connector. Pin 1 = IN (from J2), Pin 2 = OUT (to 5V bus).
 
 ### Post-Solder Checks
@@ -44,7 +41,7 @@ Before inserting any modules, use a multimeter to verify:
 
 1. **No shorts:** Check resistance between 5V and GND buses (should be high, not zero)
 2. **Continuity:** Verify J2 pin1 to J4 pin1 (5V_IN path)
-3. **Divider resistors:** Measure across R1+R2 (should read ~5.5k), R3+R4 (should read ~20k)
+3. **Divider resistors:** Measure across R1+R2 (should read ~5.5k)
 4. **Power switch:** With a jumper wire in J4, verify J2 pin1 reaches the 5V bus
 
 ## Phase 2: Learning Sensor Codes
@@ -110,7 +107,7 @@ meshtastic --set serial.mode TEXTMSG
 
 1. Insert the Heltec into the PCB socket
 2. Power on via J4 switch
-3. On another Meshtastic node (phone app or second device), you should see heartbeat messages: `GATE NODE: Online [BATT OK] 4.02V`
+3. On another Meshtastic node (phone app or second device), you should see heartbeat messages: `GATE NODE: Online`
 
 ## Phase 4: Enclosure Assembly
 
@@ -139,7 +136,6 @@ meshtastic --set serial.mode TEXTMSG
 
 6. **Wire power:**
    - Waveshare 5V OUT to J2 (observe polarity: pin 1 = +5V, pin 2 = GND)
-   - Waveshare BAT pin to J3 pin 1, Waveshare GND to J3 pin 2
    - Toggle switch between J4 pin 1 and pin 2 (or insert a JST-PH jumper)
 
 7. **Insert modules:** Plug in the Heltec V3 and Arduino Nano into their sockets. The Heltec's USB-C connector should align with the board's USB-C notch.
@@ -151,11 +147,10 @@ meshtastic --set serial.mode TEXTMSG
 ### Bench Test (before enclosure)
 
 1. Connect Waveshare Solar Power Manager D with batteries
-2. Wire 5V and GND to J2, BAT to J3
+2. Wire 5V and GND to J2
 3. Insert jumper or switch on J4
 4. Power on — Heltec should boot Meshtastic, Nano should send heartbeat
 5. Trigger KERUI D026 sensor — verify messages on the mesh network
-6. Check battery voltage reading (should match multimeter measurement within ~0.1V)
 
 ### Field Test
 
@@ -164,7 +159,6 @@ meshtastic --set serial.mode TEXTMSG
 3. Verify RF range: trigger the sensor at maximum expected distance
 4. Monitor the mesh network for 24 hours:
    - Heartbeats every 5 minutes
-   - Battery voltage stable or rising (with solar)
    - Gate events within a few seconds of triggering
 
 ### Troubleshooting
@@ -173,7 +167,6 @@ meshtastic --set serial.mode TEXTMSG
 |---------|-------|
 | No heartbeat messages | Verify Meshtastic serial config (GPIO47, 9600 baud, TEXTMSG). Check 5V bus. |
 | Gate events not detected | Verify sensor codes in config.h. Check RXB6 antenna. Run `make monitor` for debug output. |
-| Wrong battery voltage | Verify R3/R4 values (both 10k). Check J3 wiring polarity. |
 | Messages garbled | Check logic level divider (R1/R2). Measure voltage at Heltec GPIO47 — should be ~3.0V when Nano TX is high. |
 | No RF reception | Verify RXB6 is powered (5V on pins 4,5). Check DE pin pulled high (R5). Try shorter antenna distance. |
 | Nano not booting | Verify power on Nano 5V pin (R12), not VIN. Check for solder bridges. |

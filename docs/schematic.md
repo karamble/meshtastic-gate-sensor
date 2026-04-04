@@ -11,9 +11,7 @@
   | open/close|       | DE <-R5- |--+    |              |     |                |
   +-----------+       | VDD      |  |    | D3 (TX)  ----|--+  |                |
                       | GND      |  |    |              |  |  |                |
-                      +----------+  |    | A0 <---------|--|--|- BAT divider   |
-                                    |    |              |  |  |                |
-                                    |    |         5V --|--|--|- 5V            |
+                      +----------+  |    |         5V --|--|--|- 5V            |
                                     |    |        GND --|--|--|- GND           |
                                     |    +--------------+  |  |                |
                                     |                      |  |                |
@@ -29,7 +27,6 @@
   Power Mgr D         +-----+      |
   +-----------+  J2   |IN|OUT|------+----> 5V bus
   | 5V OUT  --|------->  |   |
-  | BAT pin --|--J3-->| BAT divider: R3(10k)+R4(10k) -> A0
   | GND     --|------>| GND bus
   +-----------+       +-----+
 ```
@@ -38,14 +35,12 @@
 
 | Net | Description | Connected Pins |
 |-----|-------------|----------------|
-| GND | Ground | Heltec L1, R1; Nano L4, R14; RXB6 pins 2,3,8; R2 pad2; R4 pad2; C1 pad2; C2 pad2; J2 pin2; J3 pin2 |
+| GND | Ground | Heltec L1, R1; Nano L4, R14; RXB6 pins 2,3,8; R2 pad2; C1 pad2; C2 pad2; J2 pin2 |
 | 5V | Main power bus | Heltec L2; Nano R12 (5V pin); RXB6 pins 4,5 (VDD); R5 pad1; C1 pad1; C2 pad1; J4 pin2 (switch out) |
 | 5V_IN | Unswitched input | J2 pin1 (Waveshare 5V); J4 pin1 (switch in) |
 | 3V3 | 3.3V (Heltec only) | Heltec R2, R3 (bridged, not distributed) |
 | D3 | SoftwareSerial TX | Nano L6 (D3); R1 pad1 |
 | D4 | RF DATA (named D4 on PCB, mapped to Nano D2) | Nano L5 (D2/INT0); RXB6 pin 7 (DATA) |
-| BAT_DIV | Battery midpoint | Nano R4 (A0); R3 pad2; R4 pad1 |
-| BAT_RAW | Battery raw voltage | J3 pin1 (Waveshare BAT); R3 pad1 |
 | HELTEC_RX | Level-shifted serial | R1 pad2; R2 pad1; Heltec L13 (GPIO47) |
 | DE | RXB6 data enable | RXB6 pin 6 (DE); R5 pad2 |
 
@@ -97,8 +92,7 @@ Right row (R1-R15):
 | Pin | Label | Net | Function |
 |-----|-------|-----|----------|
 | R1-R3 | D13,3V3,REF | -- | |
-| R4 | A0 | BAT_DIV | **Battery ADC** (voltage divider midpoint) |
-| R5-R11 | A1-A7 | -- | Unused |
+| R4-R11 | A0-A7 | -- | Unused |
 | R12 | 5V | 5V | **Power input** (from 5V bus, not VIN) |
 | R13 | RST | -- | |
 | R14 | GND | GND | Ground |
@@ -132,20 +126,6 @@ Converts the Nano's 5V SoftwareSerial TX to a safe level for the Heltec's 3.3V G
 ```
 
 Output voltage: 5V x 3.3k / (2.2k + 3.3k) = **3.0V** (safe for 3.3V logic input)
-
-## Battery Voltage Divider
-
-Scales the Waveshare BAT pin voltage (0-8.4V for 2S 18650) to the Nano's 0-5V ADC range.
-
-```
-  J3 BAT+ (BAT_RAW) ── R3 (10k) ──┬── Nano A0 (BAT_DIV)
-                                    │
-                                 R4 (10k)
-                                    │
-                                   GND
-```
-
-ADC reads BAT/2. Firmware multiplies by 2 to get actual voltage. With 5V reference and 10-bit ADC: resolution = 5.0 / 1024 * 2 = ~9.8mV per step.
 
 ## Power Circuit
 

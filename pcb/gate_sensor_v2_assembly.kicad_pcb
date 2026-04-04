@@ -693,6 +693,17 @@
     (pad "R16" thru_hole circle (at 11.4300 16.5100) (size 1.8000 1.8000) (drill 0.8000) (layers "*.Cu" "*.Mask"))
     (pad "R17" thru_hole circle (at 11.4300 19.0500) (size 1.8000 1.8000) (drill 0.8000) (layers "*.Cu" "*.Mask"))
     (pad "R18" thru_hole circle (at 11.4300 21.5900) (size 1.8000 1.8000) (drill 0.8000) (layers "*.Cu" "*.Mask"))
+  
+    (model "${KICAD8_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x18_P2.54mm_Vertical.step"
+      (offset (xyz -11.4300 21.5900 0.0000))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0.0000 0.0000 0.0000))
+    )
+    (model "${KICAD8_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x18_P2.54mm_Vertical.step"
+      (offset (xyz 11.4300 21.5900 0.0000))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0.0000 0.0000 0.0000))
+    )
   )
   (footprint "U1" (layer "F.Cu")
     (at 62.6200 29.7800)
@@ -730,6 +741,17 @@
     (pad "R13" thru_hole circle (at 7.6200 12.7000) (size 1.8000 1.8000) (drill 0.8000) (layers "*.Cu" "*.Mask"))
     (pad "R14" thru_hole circle (at 7.6200 15.2400) (size 1.8000 1.8000) (drill 0.8000) (layers "*.Cu" "*.Mask") (net 1 "GND"))
     (pad "R15" thru_hole circle (at 7.6200 17.7800) (size 1.8000 1.8000) (drill 0.8000) (layers "*.Cu" "*.Mask"))
+  
+    (model "${KICAD8_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x15_P2.54mm_Vertical.step"
+      (offset (xyz -7.6200 17.7800 0.0000))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0.0000 0.0000 0.0000))
+    )
+    (model "${KICAD8_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x15_P2.54mm_Vertical.step"
+      (offset (xyz 7.6200 17.7800 0.0000))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0.0000 0.0000 0.0000))
+    )
   )
   (footprint "U2" (layer "F.Cu")
     (at 49.0000 32.3200)
@@ -745,6 +767,17 @@
     (pad "6" thru_hole circle (at -5.0000 15.2400) (size 1.8000 1.8000) (drill 0.9000) (layers "*.Cu" "*.Mask") (net 8 "DE"))
     (pad "7" thru_hole circle (at -5.0000 17.7800) (size 1.8000 1.8000) (drill 0.9000) (layers "*.Cu" "*.Mask") (net 6 "D2"))
     (pad "8" thru_hole circle (at -5.0000 20.3200) (size 1.8000 1.8000) (drill 0.9000) (layers "*.Cu" "*.Mask") (net 1 "GND"))
+  
+    (model "${KICAD8_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x04_P2.54mm_Vertical.step"
+      (offset (xyz -5.0000 20.3200 0.0000))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0.0000 0.0000 0.0000))
+    )
+    (model "${KICAD8_3DMODEL_DIR}/Connector_PinSocket_2.54mm.3dshapes/PinSocket_1x04_P2.54mm_Vertical.step"
+      (offset (xyz -5.0000 -12.7000 0.0000))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0.0000 0.0000 0.0000))
+    )
   )
   (footprint "R1" (layer "F.Cu")
     (at 38.4600 24.7000)
@@ -754,6 +787,12 @@
       (effects (font (size 0.8000 0.8000) (thickness 0.1500))))
     (pad "1" thru_hole rect (at 2.5400 0.0000) (size 1.6000 1.6000) (drill 0.8000) (layers "*.Cu" "*.Mask") (net 5 "D3"))
     (pad "2" thru_hole circle (at -2.5400 0.0000) (size 1.6000 1.6000) (drill 0.8000) (layers "*.Cu" "*.Mask") (net 7 "HELTEC_RX"))
+  
+    (model "${KICAD8_3DMODEL_DIR}/Resistor_THT.3dshapes/R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal.step"
+      (offset (xyz 2.5400 0.0000 0.0000))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0.0000 0.0000 180.0000))
+    )
   )
   (footprint "R2" (layer "F.Cu")
     (at 35.9200 27.7900)
@@ -763,6 +802,12 @@
       (effects (font (size 0.8000 0.8000) (thickness 0.1500))))
     (pad "1" thru_hole rect (at 0.0000 -1.9900) (size 1.6000 1.6000) (drill 0.8000) (layers "*.Cu" "*.Mask") (net 7 "HELTEC_RX"))
     (pad "2" thru_hole circle (at 0.0000 1.9900) (size 1.6000 1.6000) (drill 0.8000) (layers "*.Cu" "*.Mask") (net 1 "GND"))
+  
+    (model "${KICAD8_3DMODEL_DIR}/Resistor_THT.3dshapes/R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal.step"
+      (offset (xyz 0.0000 1.9900 0.0000))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0.0000 0.0000 90.0000))
+    )
   )
   (footprint "R5" (layer "F.Cu")
     (at 37.0400 47.5600)
@@ -772,6 +817,12 @@
       (effects (font (size 0.8000 0.8000) (thickness 0.1500))))
     (pad "1" thru_hole rect (at -2.5400 0.0000) (size 1.6000 1.6000) (drill 0.8000) (layers "*.Cu" "*.Mask") (net 2 "5V"))
     (pad "2" thru_hole circle (at 2.5400 0.0000) (size 1.6000 1.6000) (drill 0.8000) (layers "*.Cu" "*.Mask") (net 8 "DE"))
+  
+    (model "${KICAD8_3DMODEL_DIR}/Resistor_THT.3dshapes/R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal.step"
+      (offset (xyz -2.5400 0.0000 0.0000))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0.0000 0.0000 0.0000))
+    )
   )
   (footprint "C1" (layer "F.Cu")
     (at 39.2700 16.0000)
@@ -781,6 +832,12 @@
       (effects (font (size 0.8000 0.8000) (thickness 0.1500))))
     (pad "1" thru_hole rect (at -1.2700 0.0000) (size 1.6000 1.6000) (drill 0.8000) (layers "*.Cu" "*.Mask") (net 2 "5V"))
     (pad "2" thru_hole circle (at 1.2700 0.0000) (size 1.6000 1.6000) (drill 0.8000) (layers "*.Cu" "*.Mask") (net 1 "GND"))
+  
+    (model "${KICAD8_3DMODEL_DIR}/Capacitor_THT.3dshapes/C_Disc_D3.0mm_W1.6mm_P2.50mm.step"
+      (offset (xyz -1.2700 0.0000 0.0000))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0.0000 0.0000 0.0000))
+    )
   )
   (footprint "C2" (layer "F.Cu")
     (at 25.0000 60.0000)
@@ -790,6 +847,12 @@
       (effects (font (size 0.8000 0.8000) (thickness 0.1500))))
     (pad "1" thru_hole rect (at 0.0000 -1.0000) (size 1.6000 1.6000) (drill 0.8000) (layers "*.Cu" "*.Mask") (net 2 "5V"))
     (pad "2" thru_hole circle (at 0.0000 1.0000) (size 1.6000 1.6000) (drill 0.8000) (layers "*.Cu" "*.Mask") (net 1 "GND"))
+  
+    (model "${KICAD8_3DMODEL_DIR}/Capacitor_THT.3dshapes/CP_Radial_D5.0mm_P2.00mm.step"
+      (offset (xyz 0.0000 0.0000 0.0000))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0.0000 0.0000 -90.0000))
+    )
   )
   (footprint "J2" (layer "F.Cu")
     (at 14.5400 62.0000)
@@ -799,6 +862,12 @@
       (effects (font (size 0.8000 0.8000) (thickness 0.1500))))
     (pad "1" thru_hole rect (at -2.5400 0.0000) (size 2.4000 2.4000) (drill 1.2000) (layers "*.Cu" "*.Mask") (net 3 "5V_IN"))
     (pad "2" thru_hole circle (at 2.5400 0.0000) (size 2.4000 2.4000) (drill 1.2000) (layers "*.Cu" "*.Mask") (net 1 "GND"))
+  
+    (model "${KICAD8_3DMODEL_DIR}/TerminalBlock_Phoenix.3dshapes/TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal.step"
+      (offset (xyz -2.5400 0.0000 0.0000))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0.0000 0.0000 0.0000))
+    )
   )
   (footprint "J4" (layer "F.Cu")
     (at 35.0000 62.0000)
@@ -808,5 +877,11 @@
       (effects (font (size 0.8000 0.8000) (thickness 0.1500))))
     (pad "1" thru_hole rect (at -1.0000 0.0000) (size 1.6000 1.6000) (drill 0.8000) (layers "*.Cu" "*.Mask") (net 3 "5V_IN"))
     (pad "2" thru_hole circle (at 1.0000 0.0000) (size 1.6000 1.6000) (drill 0.8000) (layers "*.Cu" "*.Mask") (net 2 "5V"))
+  
+    (model "${KICAD8_3DMODEL_DIR}/Connector_JST.3dshapes/JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical.step"
+      (offset (xyz 1.0000 0.0000 0.0000))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0.0000 0.0000 180.0000))
+    )
   )
 )
