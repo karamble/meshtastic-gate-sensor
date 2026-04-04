@@ -38,7 +38,7 @@ def _build():
         if name not in _nets: _nid[0] += 1; _nets[name] = _nid[0]
         return name
     GND = N("GND"); V5 = N("5V"); V5_IN = N("5V_IN"); V33 = N("3V3")
-    D3_NET = N("D3"); D4_NET = N("D4"); BAT_DIV = N("BAT_DIV")
+    D3_NET = N("D3"); D2_NET = N("D2"); BAT_DIV = N("BAT_DIV")
     BAT_RAW = N("BAT_RAW"); HLTC_RX = N("HELTEC_RX"); DE_NET = N("DE")
 
     _body = []
@@ -195,7 +195,7 @@ def _build():
     NANO_XL = 55.0; NANO_XR = NANO_XL + 15.24; NANO_Y0 = 12.0  # 15.24mm = 600mil standard
 
     # D2 (L5) = RXB6 DATA (INT0 for RCSwitch), D3 (L6) = SoftwareSerial TX
-    NL_NETS = [None, None, None, GND, D4_NET, D3_NET, None,
+    NL_NETS = [None, None, None, GND, D2_NET, D3_NET, None,
                None, None, None, None, None, None, None, None]
     NL_LBLS = ["D1","D0","RST","GND","D2","D3","D4",
                "D5","D6","D7","D8","D9","D10","D11","D12"]
@@ -240,7 +240,7 @@ def _build():
     #  Group 1 (pins 1-4): ANT GND GND VDD    (top)
     #  Group 2 (pins 5-8): VDD DE  DATA GND   (bottom)
     #  Total span: 40.64mm vertical. Module body extends to the right.
-    #  DATA (pin 7) → D4_NET.  DE (pin 6) unconnected.
+    #  DATA (pin 7) → D2_NET.  DE (pin 6) unconnected.
     # ══════════════════════════════════════════════════════
     RXB6_GRP_GAP = 25.4   # gap between pin groups
     RXB6_X  = 44.0        # pin column X (between Heltec R=29.86 and Nano L=55)
@@ -251,7 +251,7 @@ def _build():
                  [RXB6_Y0 + 3*P + RXB6_GRP_GAP + i*P for i in range(4)]
     # pin1=12.0  pin4=19.62  pin5=45.02  pin8=52.64
 
-    RXB6_NETS = [None, GND, GND, V5, V5, DE_NET, D4_NET, GND]
+    RXB6_NETS = [None, GND, GND, V5, V5, DE_NET, D2_NET, GND]
     RXB6_LBLS = ["ANT","GND","GND","5V","5V","DE","DATA","GND"]
 
     u2 = new_fp("U2", "RXB6_433MHz_DirectSolder",
@@ -391,7 +391,7 @@ def _build():
 
     # Verbose circuit notes on F.Fab (not silk)
     note_x = (HLTC_XR + NANO_XL) / 2
-    txt("LOGIC LEVEL: D3->R1(2k2)->R2(3k3)->GND, jct->GPIO44",
+    txt("LOGIC LEVEL: D3->R1(2k2)->R2(3k3)->GND, jct->GPIO47",
         note_x - 10, D3_Y - 5, layer="F.Fab")
     txt("BAT DIVIDER: BAT->R3(10k)->R4(10k)->GND, jct->A0",
         R3_X2 - 2, R3_Y - 3.5, layer="F.Fab")
@@ -545,12 +545,12 @@ def _build():
     # ── D2/RF Signal (Nano D2/L5 → RXB6 DATA pin 7) ────────
     # D2 is INT0, required for RCSwitch. L5 = NANO_Y0 + 4*P = 22.16
     # Route via B.Cu past D3 (Y=24.7) to avoid crossing
-    D4_RXB_X = 48.0  # clear of GND B.Cu at X=46.5
-    trk(NANO_XL, NANO_Y0 + 4*P, D4_RXB_X, NANO_Y0 + 4*P, D4_NET, "F.Cu", S)
-    via_hole(D4_RXB_X, NANO_Y0 + 4*P, D4_NET)
-    trk(D4_RXB_X, NANO_Y0 + 4*P, D4_RXB_X, RXB6_PIN_Y[6], D4_NET, "B.Cu", S)
-    via_hole(D4_RXB_X, RXB6_PIN_Y[6], D4_NET)
-    trk(D4_RXB_X, RXB6_PIN_Y[6], RXB6_X, RXB6_PIN_Y[6], D4_NET, "F.Cu", S)
+    D2_RXB_X = 48.0  # clear of GND B.Cu at X=46.5
+    trk(NANO_XL, NANO_Y0 + 4*P, D2_RXB_X, NANO_Y0 + 4*P, D2_NET, "F.Cu", S)
+    via_hole(D2_RXB_X, NANO_Y0 + 4*P, D2_NET)
+    trk(D2_RXB_X, NANO_Y0 + 4*P, D2_RXB_X, RXB6_PIN_Y[6], D2_NET, "B.Cu", S)
+    via_hole(D2_RXB_X, RXB6_PIN_Y[6], D2_NET)
+    trk(D2_RXB_X, RXB6_PIN_Y[6], RXB6_X, RXB6_PIN_Y[6], D2_NET, "F.Cu", S)
 
     # ── HELTEC_RX (R1 pad2 → Heltec L5 / GPIO44 at Y=20.16) ─────
     # Route to L13 (GPIO47) at (7.0, 40.48). Go through R12/R13 gap on R column.
