@@ -87,7 +87,7 @@ Used for GND drops and traces that must cross F.Cu signals:
 - **V5 feed from J4**: Via at X=34, B.Cu vertical to V5 bus (crosses GND bus underneath)
 - **V5 to Nano**: B.Cu vertical at X=76.78 (avoids crossing R14 GND stub)
 - **V5 to RXB6**: B.Cu vertical at X=50 (between GND drops)
-- **D4/RF signal**: B.Cu from X=48 (avoids crossing D3 trace)
+- **D2/RF signal**: B.Cu from X=48 (avoids crossing D3 trace)
 
 ### GND Drop Strategy
 

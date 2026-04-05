@@ -15,7 +15,7 @@ v2.2 changes (compact layout):
 v2.1 changes (from expert DRC review):
   - Fixed VIN/5V short (removed V5 from Nano VIN pin)
   - GND drops routed on B.Cu via vias (eliminates track crossings)
-  - D4 signal routed via B.Cu (fixes D4/GND short at RXB6)
+  - D2 signal routed via B.Cu (fixes D2/GND short at RXB6)
   - 3V3 bus rerouted above components (fixes 3V3/pad shorts)
   - V5 feed uses B.Cu to cross GND bus
   - All text >= 0.8mm height, 0.15mm stroke (JLCPCB minimum)

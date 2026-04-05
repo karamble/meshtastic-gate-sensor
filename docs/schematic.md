@@ -40,11 +40,11 @@
 | 5V_IN | Unswitched input | J2 pin1 (Waveshare 5V); J4 pin1 (switch in) |
 | 3V3 | 3.3V (Heltec only) | Heltec R2, R3 (bridged, not distributed) |
 | D3 | SoftwareSerial TX | Nano L6 (D3); R1 pad1 |
-| D4 | RF DATA (named D4 on PCB, mapped to Nano D2) | Nano L5 (D2/INT0); RXB6 pin 7 (DATA) |
+| D2 | RF DATA | Nano L5 (D2/INT0); RXB6 pin 7 (DATA) |
 | HELTEC_RX | Level-shifted serial | R1 pad2; R2 pad1; Heltec L13 (GPIO47) |
 | DE | RXB6 data enable | RXB6 pin 6 (DE); R5 pad2 |
 
-**Note on D4 net naming:** The PCB net is called "D4" for historical reasons. On the Nano, this signal connects to physical pin D2 (L5), which provides INT0 for RCSwitch interrupt-driven reception. The firmware uses `RF_PIN 2` (D2).
+**Note on D2 net:** This signal connects to physical pin D2 (L5), which provides INT0 for RCSwitch interrupt-driven reception. The firmware uses `RF_PIN 2` (D2).
 
 ## Pin Assignments
 
@@ -83,7 +83,7 @@ Left row (L1-L15):
 | L2 | D0 | -- | |
 | L3 | RST | -- | |
 | L4 | GND | GND | Ground |
-| L5 | D2 | D4 | **RF DATA input** (INT0 for RCSwitch) |
+| L5 | D2 | D2 | **RF DATA input** (INT0 for RCSwitch) |
 | L6 | D3 | D3 | **SoftwareSerial TX** to Heltec |
 | L7-L15 | D4-D12 | -- | Unused |
 
