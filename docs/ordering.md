@@ -44,27 +44,35 @@ cd pcb/output && zip -r ../../gate_sensor_gerbers.zip . && cd ../..
 | Outer Copper Weight | 1 oz | Default |
 | Via Covering | Tented | Default, covers via holes with solder mask |
 
+### High-Spec Options
+
+| Setting | Value | Notes |
+|---------|-------|-------|
+| Outer Copper Weight | 1 oz | Default. 2 oz not needed — max current is ~105mA. |
+| Via Covering | Tented | Default. Covers via holes with solder mask on both sides. |
+| Via Plating Method | Standard | Default. Electroless/electroplated copper. |
+| Min via hole size/diameter | 0.3mm/0.5mm | Default. Our vias are 0.8mm drill / 1.4mm pad — well within limits. |
+| Board Outline Tolerance | +/- 0.2mm | Default. |
+| Confirm Production File | **Yes** | Recommended for first order. JLCPCB engineer reviews files before production. |
+| Mark on PCB | **Remove Mark** | Prevents JLCPCB from placing their order number on the board. May cost ~$1 extra. Alternatively select "Specify a location" if you added a JLCJLCJLCJLC text placeholder. |
+| Electrical Test | Flying Probe - Fully Test | Default. Tests all nets for shorts and opens. |
+| Gold Fingers | No | Not used on this board. |
+| Castellated Holes | No | Not used. |
+| Edge Plating | No | Not used. |
+| Blind Slots | No | Not used. Board has only standard through-hole slots. |
+| UL Marking | No | Not required for prototype/hobby use. |
+
 ### Advanced Options
 
 | Setting | Value | Notes |
 |---------|-------|-------|
-| Board Outline Tolerance | +/- 0.2mm | Default |
-| Confirm Production File | Yes | Recommended for first order. JLCPCB engineer reviews your files before production. |
-| Remove Order Number | **Yes** | Prevents JLCPCB from placing their order number on your board. May cost ~$1 extra. Alternatively, select "Specify a location" if you added a JLCJLCJLCJLC text placeholder. |
-| Flying Probe Test | Fully Test | Default |
-| Gold Fingers | No | Not used |
-| Castellated Holes | No | Not used |
-| Edge Plating | No | Not used |
-
-### Leave as Default
-
-These settings should already be correct at their defaults:
-
-- Mark on PCB: default
-- Electrical Test: default (Flying Probe - Fully Test)
-- Paper between PCBs: default (No)
-- Appearance Quality: default (IPC Class 2)
-- Silkscreen Technology: default (Ink-jet printing)
+| 4-Wire Kelvin Test | No | Default. Only needed for ultra-low-resistance measurements. |
+| Paper between PCBs | No | Default. Boards are individually separated in the package. |
+| Appearance Quality | IPC Class 2 | Default. Standard quality for commercial electronics. |
+| Silkscreen Technology | Ink-jet Printing | Default. Sufficient for 0.8mm text and pin labels. |
+| Package Box | Default | Standard JLCPCB packaging. |
+| Inspection Report | No | Not needed for prototype orders. |
+| PCB Remark | *(leave blank)* | Optional field for special instructions to the fab. Not needed. |
 
 ## Checkout
 
