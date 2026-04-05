@@ -100,6 +100,13 @@ assembly-step: assembly
 		-o /pcb/output/assembly_3d.step /pcb/gate_sensor_v2_assembly.kicad_pcb
 	@echo "3D STEP file: pcb/output/assembly_3d.step"
 
+# --- Test targets ---
+
+.PHONY: test-netlist
+
+test-netlist:
+	python3 pcb/test_netlist.py
+
 # --- PlatformIO targets ---
 
 .PHONY: build upload monitor clean
