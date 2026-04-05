@@ -59,7 +59,8 @@ make monitor        # serial monitor
 │   ├── pcb.md                 # PCB design documentation
 │   ├── firmware.md            # firmware documentation
 │   ├── assembly.md            # assembly and setup guide
-│   └── bom.md                 # bill of materials
+│   ├── bom.md                 # bill of materials
+│   └── ordering.md            # JLCPCB ordering guide
 └── pin-outs/                  # component pinout references (WebP)
 ```
 
