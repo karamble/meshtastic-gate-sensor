@@ -190,19 +190,21 @@ def _build():
     # ══════════════════════════════════════════════════════
     NANO_XL = 55.0; NANO_XR = NANO_XL + 15.24; NANO_Y0 = 12.0  # 15.24mm = 600mil standard
 
-    # D2 (L5) = RXB6 DATA (INT0 for RCSwitch), D3 (L6) = SoftwareSerial TX
-    NL_NETS = [None, None, None, GND, D2_NET, D3_NET, None,
-               None, None, None, None, None, None, None, None]
-    NL_LBLS = ["D1","D0","RST","GND","D2","D3","D4",
-               "D5","D6","D7","D8","D9","D10","D11","D12"]
-    # FIX v2.1: R15 (VIN) set to None — VIN has onboard regulator,
+    # LEFT side — analog/power (D13 at USB end, VIN at bottom)
+    # FIX v2.1: L15 (VIN) set to None — VIN has onboard regulator,
     # shorting VIN to 5V feeds regulator output back to input.
-    # R2 (3V3) left unconnected — Nano has its own 3.3V regulator,
+    # L2 (3V3) left unconnected — Nano has its own 3.3V regulator,
     # connecting Heltec 3V3 would cause regulator contention.
-    NR_NETS = [None, None, None, None, None, None, None,
+    NL_NETS = [None, None, None, None, None, None, None,
                None, None, None, None, V5, None, GND, None]
-    NR_LBLS = ["D13","3V3","REF","A0","A1","A2","A3",
+    NL_LBLS = ["D13","3V3","REF","A0","A1","A2","A3",
                "A4","A5","A6","A7","5V","RST","GND","VIN"]
+    # RIGHT side — digital (D12 at USB end, D1/TX at bottom)
+    # D2 (R11) = RXB6 DATA (INT0 for RCSwitch), D3 (R10) = SoftwareSerial TX
+    NR_NETS = [None, None, None, None, None, None, None,
+               None, None, D3_NET, D2_NET, GND, None, None, None]
+    NR_LBLS = ["D12","D11","D10","D9","D8","D7","D6",
+               "D5","D4","D3","D2","GND","RST","D0","D1"]
 
     u1 = new_fp("U1", "Arduino_Nano_Socket",
                 (NANO_XL+NANO_XR)/2, NANO_Y0 + 7*P)
@@ -274,12 +276,11 @@ def _build():
     # ══════════════════════════════════════════════════════
     #  R1–R4  Resistors
     # ══════════════════════════════════════════════════════
-    D3_Y = NANO_Y0 + 5*P    # 24.70
-    A0_Y = NANO_Y0 + 3*P    # 19.62
+    R1_DIV_Y = 24.70         # voltage divider Y (kept for clean GPIO47 routing)
 
     # R1 (2.2 k) — series, logic level divider
     # Shifted right 2mm from v2.2 to clear Heltec R-column silk labels (pins 40-42)
-    R1_X1, R1_X2, R1_Y = 41.0, 41.0 - 5.08, D3_Y
+    R1_X1, R1_X2, R1_Y = 41.0, 41.0 - 5.08, R1_DIV_Y
     r1 = new_fp("R1", "2.2k", (R1_X1+R1_X2)/2, R1_Y)
     r1.pad("1", R1_X1, R1_Y, 0.8, 1.6, D3_NET, True)
     r1.pad("2", R1_X2, R1_Y, 0.8, 1.6, HLTC_RX)
@@ -363,7 +364,7 @@ def _build():
     # Verbose circuit notes on F.Fab (not silk)
     note_x = (HLTC_XR + NANO_XL) / 2
     txt("LOGIC LEVEL: D3->R1(2k2)->R2(3k3)->GND, jct->GPIO47",
-        note_x - 10, D3_Y - 5, layer="F.Fab")
+        note_x - 10, R1_DIV_Y - 5, layer="F.Fab")
     txt("All boards removable except U2 (RXB6 direct solder)",
         5, BH - 2.0, layer="F.Fab")
 
@@ -397,10 +398,10 @@ def _build():
     HLTC_5V_Y    = HLTC_Y0 + P        # L2 = 5V = 12.54
     HLTC_RX_Y    = HLTC_Y0 + 12*P     # L13 = GPIO47 = 40.48 (serial RX)
     HLTC_GND_R1_Y = HLTC_Y0           # R1 = GND = 10.0
-    NANO_3V3_Y   = NANO_Y0 + P        # R2  = 14.54
-    NANO_GND_L_Y = NANO_Y0 + 3*P      # L4  = 19.62
-    NANO_5V_Y    = NANO_Y0 + 11*P     # R12 = 39.94
-    NANO_GND_R_Y = NANO_Y0 + 13*P     # R14 = 45.02
+    NANO_3V3_Y   = NANO_Y0 + P        # L2  = 14.54 (LEFT side)
+    NANO_GND_L_Y = NANO_Y0 + 13*P     # L14 = 45.02
+    NANO_5V_Y    = NANO_Y0 + 11*P     # L12 = 39.94 (LEFT side)
+    NANO_GND_R_Y = NANO_Y0 + 11*P     # R12 = 39.94
 
     # ── Offset X positions for GND drops ────────────────
     # Through-hole pads have copper on BOTH layers, so B.Cu traces
@@ -434,9 +435,9 @@ def _build():
     gnd_drop_offset(HLTC_XL, HLTC_Y0, GND_HLTC_L_X)
     # Heltec R1 GND (29.86, 10.0) → offset to X=32.5
     gnd_drop_offset(HLTC_XR, HLTC_Y0, GND_HLTC_R_X)
-    # Nano L4 GND (55.0, 19.62) → offset to X=53.0
+    # Nano L14 GND (55.0, 45.02) → offset to X=52.5
     gnd_drop_offset(NANO_XL, NANO_GND_L_Y, GND_NANO_L_X)
-    # Nano R14 GND (70.24, 45.02) → right to X=73.5 (within 75mm board)
+    # Nano R12 GND (70.24, 39.94) → offset to X=68.0
     gnd_drop_offset(NANO_XR, NANO_GND_R_Y, GND_NANO_R_X)
 
     # RXB6 GND — pin 8 drops to GND bus (offset left of pin column)
@@ -457,8 +458,8 @@ def _build():
     # Heltec L2 (5V) at (7.0, 12.54) → jog left to X=3.0, then down to V5 bus
     trk(HLTC_XL, HLTC_5V_Y, 3.0, HLTC_5V_Y, V5, "F.Cu", PW)
     trk(3.0, HLTC_5V_Y, 3.0, V5_BUS_Y, V5, "F.Cu", PW)
-    # V5 bus — straight run (R4 removed, no notch needed)
-    trk(3.0, V5_BUS_Y, 73.0, V5_BUS_Y, V5, "F.Cu", PW)
+    # V5 bus — straight run (ends at X=50, last tap is RXB6/Nano via at X=50)
+    trk(3.0, V5_BUS_Y, 50.0, V5_BUS_Y, V5, "F.Cu", PW)
 
     # V5 bus feed from J4 pin2 — via at X=40 to avoid GND_R2 B.Cu at X=38
     trk(J4_X0 + 2, J4_Y, 40.0, J4_Y, V5, "F.Cu", PW)
@@ -467,14 +468,10 @@ def _build():
     via_hole(40.0, V5_BUS_Y, V5)
     # Note: V5 bus endpoint at X=73.0, within 75mm board
 
-    # V5 to Nano R12 — via B.Cu to avoid crossing R14 GND stub on F.Cu
-    # Route at X=73.0 (within board, clears Nano R pads and GND drop at X=68)
-    V5_NANO_X = 73.0
-    trk(V5_NANO_X, V5_BUS_Y, V5_NANO_X, V5_BUS_Y - 0.5, V5, "F.Cu", PW)
-    via_hole(V5_NANO_X, V5_BUS_Y - 0.5, V5)
-    trk(V5_NANO_X, V5_BUS_Y - 0.5, V5_NANO_X, NANO_5V_Y, V5, "B.Cu", PW)
-    via_hole(V5_NANO_X, NANO_5V_Y, V5)
-    trk(V5_NANO_X, NANO_5V_Y, NANO_XR, NANO_5V_Y, V5, "F.Cu", PW)
+    # V5 to Nano L12 — tap from existing RXB6 V5 B.Cu column at X=50
+    # B.Cu at X=50 already carries V5 from bus (Y=55) to RXB6 pin 4 (Y=19.62)
+    via_hole(50.0, NANO_5V_Y, V5)
+    trk(50.0, NANO_5V_Y, NANO_XL, NANO_5V_Y, V5, "F.Cu", PW)
 
     # ── V5_IN (J2 pin1 → J4 pin1, routed below connectors) ──
     trk(J2_X0, J2_Y, J2_X0, J2_Y + 2.5, V5_IN, "F.Cu", PW)
@@ -495,18 +492,28 @@ def _build():
     via_hole(50.0, RXB6_PIN_Y[3], V5)
     trk(50.0, RXB6_PIN_Y[3], RXB6_X, RXB6_PIN_Y[3], V5, "F.Cu", PW)
 
-    # ── D3 Signal (Nano L6 → R1 pad1) ──────────────────
-    trk(NANO_XL, NANO_Y0 + 5*P, R1_X1, R1_Y, D3_NET, "F.Cu", S)
+    # ── D3 Signal (Nano R10 → R1 pad1) ──────────────────
+    # D3 at (70.24, 34.86) → R1 pad1 at (41.0, 24.70)
+    # All F.Cu: right to board edge, up above Nano, left, drop at X=36.5
+    # (left of C1→RXB6 V5 trace at X=38-44 and GND diagonal at X=40-44)
+    D3_NANO_Y = NANO_Y0 + 9*P   # 34.86
+    D3_TOP_Y  = 10.0             # above first Nano pad (Y=12)
+    D3_DROP_X = 36.5             # left of C1 pad (X=37.2) and V5/GND traces
+    D3_JOG_Y  = 23.0             # above R1 pad zone (starts Y=23.9)
+    trk(NANO_XR, D3_NANO_Y, 73.0, D3_NANO_Y, D3_NET, "F.Cu", S)
+    trk(73.0, D3_NANO_Y, 73.0, D3_TOP_Y, D3_NET, "F.Cu", S)
+    trk(73.0, D3_TOP_Y, D3_DROP_X, D3_TOP_Y, D3_NET, "F.Cu", S)
+    trk(D3_DROP_X, D3_TOP_Y, D3_DROP_X, D3_JOG_Y, D3_NET, "F.Cu", S)
+    trk(D3_DROP_X, D3_JOG_Y, R1_X1, D3_JOG_Y, D3_NET, "F.Cu", S)
+    trk(R1_X1, D3_JOG_Y, R1_X1, R1_Y, D3_NET, "F.Cu", S)
 
-    # ── D2/RF Signal (Nano D2/L5 → RXB6 DATA pin 7) ────────
-    # D2 is INT0, required for RCSwitch. L5 = NANO_Y0 + 4*P = 22.16
-    # Route via B.Cu past D3 (Y=24.7) to avoid crossing
-    D2_RXB_X = 48.0  # clear of GND B.Cu at X=46.5
-    trk(NANO_XL, NANO_Y0 + 4*P, D2_RXB_X, NANO_Y0 + 4*P, D2_NET, "F.Cu", S)
-    via_hole(D2_RXB_X, NANO_Y0 + 4*P, D2_NET)
-    trk(D2_RXB_X, NANO_Y0 + 4*P, D2_RXB_X, RXB6_PIN_Y[6], D2_NET, "B.Cu", S)
-    via_hole(D2_RXB_X, RXB6_PIN_Y[6], D2_NET)
-    trk(D2_RXB_X, RXB6_PIN_Y[6], RXB6_X, RXB6_PIN_Y[6], D2_NET, "F.Cu", S)
+    # ── D2/RF Signal (Nano D2/R11 → RXB6 DATA pin 7) ────────
+    # D2 is INT0, required for RCSwitch. R11 = NANO_Y0 + 10*P = 37.40
+    # All F.Cu: right to board edge, down to RXB6 DATA Y, left to pin
+    D2_NANO_Y = NANO_Y0 + 10*P  # 37.40
+    trk(NANO_XR, D2_NANO_Y, 73.0, D2_NANO_Y, D2_NET, "F.Cu", S)
+    trk(73.0, D2_NANO_Y, 73.0, RXB6_PIN_Y[6], D2_NET, "F.Cu", S)
+    trk(73.0, RXB6_PIN_Y[6], RXB6_X, RXB6_PIN_Y[6], D2_NET, "F.Cu", S)
 
     # ── HELTEC_RX (R1 pad2 → Heltec L5 / GPIO44 at Y=20.16) ─────
     # Route to L13 (GPIO47) at (7.0, 40.48). Go through R12/R13 gap on R column.
