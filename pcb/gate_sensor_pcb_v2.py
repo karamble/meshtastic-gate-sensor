@@ -176,8 +176,8 @@ def _build():
 
     txt("U3  HELTEC LoRa32 V3", 16, hy1 - 2.5, layer="F.Fab")
     # Name inside frame — vertical (90° CCW)
-    txt("HELTEC LoRa32 V3", (HLTC_XL+HLTC_XR)/2 - 1, (hy1+hy2)/2 + 8, angle=90)
-    txt("SOCKET", (HLTC_XL+HLTC_XR)/2 + 1.5, (hy1+hy2)/2 + 4, angle=90)
+    txt("HELTEC LoRa32 V3", (HLTC_XL+HLTC_XR)/2 - 1, (hy1+hy2)/2 + 3, angle=90)
+    txt("SOCKET", (HLTC_XL+HLTC_XR)/2 + 1.5, (hy1+hy2)/2 - 1, angle=90)
 
     for i, lb in enumerate(HL_LBLS):
         txt(lb, HLTC_XL - 5.0, HLTC_Y0 + i*P - 0.33)
@@ -224,8 +224,10 @@ def _build():
 
     txt("U1  ARDUINO NANO", NANO_XL, ny1 - 2.5, layer="F.Fab")
     # Name inside frame — vertical (90° CCW)
-    txt("ARDUINO NANO", (NANO_XL+NANO_XR)/2 - 1, (ny1+ny2)/2 + 6, angle=90)
-    txt("SOCKET", (NANO_XL+NANO_XR)/2 + 1.5, (ny1+ny2)/2 + 4, angle=90)
+    txt("ARDUINO NANO", (NANO_XL+NANO_XR)/2 - 1, (ny1+ny2)/2 + 1, angle=90)
+    txt("SOCKET", (NANO_XL+NANO_XR)/2 + 1.5, (ny1+ny2)/2 - 1, angle=90)
+    # USB label at top of Nano frame (matching Heltec)
+    txt("USB", (NANO_XL+NANO_XR)/2, ny1 + 2.0)
 
     for i, lb in enumerate(NL_LBLS):
         txt(lb, NANO_XL - 3.5, NANO_Y0 + i*P - 0.33)
@@ -263,7 +265,7 @@ def _build():
     silk_box(rxb_x1, rxb_y1, rxb_x2, rxb_y2)
     txt("U2 RXB6 433MHz", rxb_x1 + 1, rxb_y1 - 1.5, layer="F.Fab")
     # Name inside frame — vertical (90° CCW)
-    txt("RXB6 433MHz", RXB6_X, (rxb_y1+rxb_y2)/2 + 5, angle=90)
+    txt("RXB6 433MHz", RXB6_X, (rxb_y1+rxb_y2)/2, angle=90)
     txt("DIRECT SOLDER", rxb_x1, rxb_y2 + 1.5, layer="F.Fab")
     # Pin labels — move pins near R5/C1 area to F.Fab to avoid silk-over-copper
     for i, lb in enumerate(RXB6_LBLS):
@@ -285,7 +287,7 @@ def _build():
     r1.pad("1", R1_X1, R1_Y, 0.8, 1.6, D3_NET, True)
     r1.pad("2", R1_X2, R1_Y, 0.8, 1.6, HLTC_RX)
     fab_box(R1_X2 - 1.2, R1_Y - 1.4, R1_X1 + 1.2, R1_Y + 1.4)
-    txt("R1 2k2", R1_X2, R1_Y - 3.5)
+    txt("R1 2k2", (R1_X1+R1_X2)/2, R1_Y - 3.0)
 
     # R2 (3.3 k) — shunt, logic level divider
     # Pad 1 offset 1.1mm down from R1 pad2 to clear hole-to-hole minimum
