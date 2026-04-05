@@ -39,6 +39,9 @@ __pycache__/
 .claude/
 CLAUDE.md
 
+# Secrets
+.env
+
 # Reference images (not needed for build — datasheets/screenshots)
 *.png
 *.jpg
