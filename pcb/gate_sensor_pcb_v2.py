@@ -204,7 +204,7 @@ def _build():
     NR_NETS = [None, None, None, None, None, None, None,
                None, None, D3_NET, D2_NET, GND, None, None, None]
     NR_LBLS = ["D12","D11","D10","D9","D8","D7","D6",
-               "D5","D4","D3","D2","GND","RST","D0","D1"]
+               "D5","D4","D3","D2","GND","RST","D1","D0"]
 
     u1 = new_fp("U1", "Arduino_Nano_Socket",
                 (NANO_XL+NANO_XR)/2, NANO_Y0 + 7*P)
