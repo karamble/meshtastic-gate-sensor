@@ -44,7 +44,7 @@ void loop() {
             lastRfEvent = now;
 
             if (code == CODE_OPEN) {
-                sendGateEvent("OPEN");
+                sendGateEvent("TRIGGERED");
             } else if (code == CODE_CLOSED) {
                 sendGateEvent("CLOSED");
             } else {

@@ -4,8 +4,8 @@
 // --- 433 MHz Sensor Codes ---
 // Run the learning sketch (Phase 2) to find your sensor's codes.
 // Replace these with the decimal values from rc-switch output.
-#define CODE_OPEN    0  // TODO: replace with learned OPEN code
-#define CODE_CLOSED  0  // TODO: replace with learned CLOSED code
+#define CODE_OPEN    150910  // KERUI D026 — transmits same code on open and close
+#define CODE_CLOSED  0       // disabled — sensor does not emit reliable close code
 
 // --- Sensor Identity ---
 #define SENSOR_NAME "Gate"
@@ -17,7 +17,7 @@
 
 // --- Timing (milliseconds) ---
 #define HEARTBEAT_MS   300000  // 5 min heartbeat
-#define DEBOUNCE_MS    200     // RF retransmission debounce
+#define DEBOUNCE_MS    10000   // 10s — absorb KERUI retransmit bursts, one event per opening
 
 // --- UART Baud Rate ---
 #define MESH_BAUD 9600  // Meshtastic serial module baud
