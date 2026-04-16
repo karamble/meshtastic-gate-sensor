@@ -46,21 +46,23 @@ Defined in `firmware/include/config.h`:
 
 Edit `firmware/include/config.h` before building:
 
-### Sensor Codes (required)
+### Sensor Codes
 
 ```c
-#define CODE_OPEN    0  // Replace with learned OPEN code
-#define CODE_CLOSED  0  // Replace with learned CLOSED code
+#define CODE_OPEN    150910  // KERUI D026 — transmits same code on open and close
+#define CODE_CLOSED  0       // disabled — sensor does not emit a distinct close code
 ```
 
-These must be learned from your specific KERUI D026 sensor using the RCSwitch examples (see [assembly.md](assembly.md) for the learning procedure).
+`CODE_OPEN` ships pre-calibrated for the KERUI D026 used in this build. For any other 433 MHz sensor, discover its decimal code with `make learn-sensor` — the production firmware prints every decoded code to USB serial as `RF unknown: <decimal>`. Set `CODE_OPEN` to the repeating value and re-flash. See [learn-sensor.md](learn-sensor.md) for the full procedure.
+
+`CODE_CLOSED` stays at `0` (disabled) for the KERUI D026 because it emits the same code on open and close. If your sensor emits a distinct close code, set it here.
 
 ### Timing
 
 | Define | Default | Description |
 |--------|---------|-------------|
 | `HEARTBEAT_MS` | 300000 (5 min) | Interval between "Online" heartbeat messages |
-| `DEBOUNCE_MS` | 200 | Minimum time between accepted RF events (filters retransmissions) |
+| `DEBOUNCE_MS` | 10000 (10 s) | Minimum time between accepted RF events. Collapses the KERUI retransmit burst (4–10 copies per trigger) into one mesh event per physical opening. |
 
 ## Message Format
 
@@ -69,9 +71,10 @@ All messages are sent as plain text over SoftwareSerial at 9600 baud. Meshtastic
 ### Gate Events
 
 ```
-Gate: OPEN
-Gate: CLOSED
+Gate: TRIGGERED
 ```
+
+A single event is emitted per physical trigger. The 10 s debounce collapses the KERUI retransmit burst into one mesh message. The sensor fires the same code on open and close, so there is no separate `OPEN` / `CLOSED` text.
 
 ### Heartbeat (every 5 minutes)
 
@@ -85,7 +88,7 @@ GATE NODE: Online
 RF unknown: 1234567
 ```
 
-This is printed to the Nano's USB serial (115200 baud) only, not forwarded to Meshtastic. Useful during the learning phase.
+Printed to the Nano's USB serial (115200 baud) only, not forwarded to Meshtastic. Used by `make learn-sensor` to discover the decimal code for a new sensor.
 
 ## Firmware Logic
 
@@ -98,18 +101,19 @@ This is printed to the Nano's USB serial (115200 baud) only, not forwarded to Me
 
 ### loop()
 
-1. **RF event handling:** When RCSwitch receives a valid code, debounce (200ms) and send the appropriate gate event message. Unknown codes are logged to USB serial.
-2. **Heartbeat:** Every 5 minutes, send "Online" status.
+1. **RF event handling:** When rc-switch receives a valid code, the 10 s debounce window is checked. If the code matches `CODE_OPEN`, `Gate: TRIGGERED` is sent to the mesh and echoed on USB serial. If it matches `CODE_CLOSED` (when configured), `Gate: CLOSED` is sent. Unrecognised codes are logged to USB serial as `RF unknown: <decimal>` and not forwarded.
+2. **Heartbeat:** Every 5 minutes, send `GATE NODE: Online` on both the mesh UART and USB serial.
 
 ## Build and Upload
 
 All commands use Make targets that wrap PlatformIO:
 
 ```bash
-make build     # Compile firmware
-make upload    # Flash to Nano via USB (auto-detects port)
-make monitor   # Serial monitor at 115200 baud (Nano debug output)
-make clean     # Clean build artifacts
+make build          # Compile firmware
+make upload         # Flash to Nano via USB (auto-detects port)
+make monitor        # Serial monitor at 115200 baud (Nano debug output)
+make learn-sensor   # USB serial monitor tuned for discovering a new 433 MHz sensor code
+make clean          # Clean build artifacts
 ```
 
 Ensure the Nano is connected via USB. CH340 driver must be installed on the host.

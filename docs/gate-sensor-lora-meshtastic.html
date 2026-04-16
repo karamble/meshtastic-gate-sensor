@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gate Sensor — LoRa · Meshtastic · Solar · PCB · Build Guide &amp; BOM v2.2</title>
+<title>Gate Sensor — LoRa · Meshtastic · Solar · PCB · Build Guide &amp; BOM v2.3</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
 
@@ -481,7 +481,7 @@
 <header class="site-header">
   <h1>Gate Sensor — LoRa · Meshtastic · Solar UPS · Carrier PCB · Build Guide &amp; BOM</h1>
   <div class="meta">
-    <span>BOM v2</span>
+    <span>BOM v2.3</span>
     <span class="dot">·</span>
     <span>1× sensor node</span>
     <span class="dot">·</span>
@@ -562,9 +562,9 @@
         <td>
           <span class="tag tag-rec">Sensor</span>
           <span class="comp-name">KERUI D026 — 433&nbsp;MHz Wireless Door / Window Sensor</span>
-          <span class="comp-desc">75×14×23&nbsp;mm · 433&nbsp;MHz · 50–150&nbsp;m open range · built-in omnidirectional antenna · <strong>sends both OPEN and CLOSED codes</strong> (required — many cheap EV1527 sensors only send OPEN). Battery: <strong>23A 12V</strong> (small cylindrical key-fob type, not CR2032 — widely available). Learn codes with serial monitor before flashing bridge sketch. Uses KERUI encoding — rc-switch still reads it correctly after learning.
-          <br><br><strong>Alternative:</strong> <em>Sonoff DW2-RF</em> (~$9) — CR2032, well-documented, confirmed open+close, slightly higher cost but more reliable protocol. Search "Sonoff DW2-RF" on AliExpress or itead.cc.
-          <br><br><strong>Avoid:</strong> generic unbranded EV1527 sensors (~$2) — most only transmit on open, not on close.</span>
+          <span class="comp-desc">75×14×23&nbsp;mm · 433&nbsp;MHz · 50–150&nbsp;m open range · built-in omnidirectional antenna · <strong>emits the same code on open and close</strong> (`150910` for the unit this project is calibrated against). Battery: <strong>23A 12V</strong> (small cylindrical key-fob type, not CR2032 — widely available). The firmware treats every decoded code as a single <code>Gate: TRIGGERED</code> event with a 10 s debounce; `CODE_CLOSED` stays disabled. Discover your own unit's code with <code>make learn-sensor</code> if it differs.
+          <br><br><strong>Alternative:</strong> <em>Sonoff DW2-RF</em> (~$9) — CR2032, distinct open and close codes. Set both <code>CODE_OPEN</code> and <code>CODE_CLOSED</code> in <code>firmware/include/config.h</code> if you want separate OPEN / CLOSED messages on the mesh.
+          <br><br><strong>Generic EV1527 sensors</strong> (~$2) typically only transmit on open — fine for this firmware since we only need one code per event anyway.</span>
         </td>
         <td class="source">AliExpress — search <em>"KERUI D026 433MHz"</em> · KERUI Official Store · ~$4–5<br>Alternative: <a href="https://itead.cc/product/sonoff-dw2-rf-433mhz-rf-wireless-door-window-sensor/" target="_blank">itead.cc Sonoff DW2-RF ↗</a> · ~$9</td>
         <td class="price">~$4</td>
@@ -680,9 +680,9 @@
         <td class="num">14</td>
         <td>1×</td>
         <td>
-          <span class="tag tag-new">New v2.2</span>
+          <span class="tag tag-warn">Optional (DNP)</span>
           <span class="comp-name">R5 — 10&nbsp;kΩ ¼W axial resistor</span>
-          <span class="comp-desc"><strong>DE pull-up</strong> — holds RXB6 Data Enable pin (pin 6) HIGH via 5V. Ensures receiver data output is always active.</span>
+          <span class="comp-desc"><strong>DE pull-up</strong> — holds RXB6 Data Enable pin (pin 6) HIGH via 5V. Most RXB6 batches have an internal bias on DE, so the receiver runs fine with R5 omitted. The v2.3 reference build leaves this footprint unpopulated; populate only if your unit stays in standby without it.</span>
         </td>
         <td class="source">AliExpress resistor kit</td>
         <td class="price">—</td>
@@ -691,7 +691,7 @@
         <td class="num">15</td>
         <td>1×</td>
         <td>
-          <span class="tag tag-new">New v2.2</span>
+          <span class="tag tag-req">Required</span>
           <span class="comp-name">C1 — 100&nbsp;nF ceramic capacitor (MLCC or disc)</span>
           <span class="comp-desc"><strong>Bypass cap</strong> near RXB6 VDD pins. Filters HF noise from 5V rail. Place close to pins 4+5. 2.54&nbsp;mm lead pitch.</span>
         </td>
@@ -702,7 +702,7 @@
         <td class="num">16</td>
         <td>1×</td>
         <td>
-          <span class="tag tag-new">New v2.2</span>
+          <span class="tag tag-req">Required</span>
           <span class="comp-name">C2 — 100&nbsp;µF / 16V electrolytic capacitor (radial)</span>
           <span class="comp-desc"><strong>Bulk cap</strong> on 5V bus near J4. Smooths inrush current during Heltec TX (500mA peak). ~6.3&nbsp;mm dia, 5.08&nbsp;mm pitch.</span>
         </td>
@@ -727,7 +727,7 @@
         <td>5×</td>
         <td>
           <span class="tag tag-rec">Recommended</span>
-          <span class="comp-name">Gate Sensor Carrier PCB v2.2 — 75×66&nbsp;mm · 2-layer</span>
+          <span class="comp-name">Gate Sensor Carrier PCB v2.3 — 75×66&nbsp;mm · 2-layer</span>
           <span class="comp-desc">Custom carrier board. Heltec V3 full 2×18 pin socket (36 total) · Nano 2×15 socket · RXB6 8-pin SIP direct solder · R1–R5 + C1 + C2 through-hole pads · J2 screw terminal · J4 JST-PH power switch · M3 mounting holes · USB-C notch. Generated with <code>gate_sensor_pcb_v2.py</code> · <a href="gate_sensor_pcb_v2.py">download .py</a> · <a href="gate_sensor_v2.kicad_pcb">download .kicad_pcb</a> (see Phase 7). JLCPCB: 5 boards for ~$5 in the 100×100&nbsp;mm tier.</span>
         </td>
         <td class="source"><a href="https://jlcpcb.com" target="_blank">jlcpcb.com ↗</a> · upload Gerbers · 2-layer · HASL · ~$5 for 5 pcs · ~$4 shipping</td>
@@ -876,16 +876,21 @@
 
     <div class="step">
       <div class="step-title"><span class="step-num">4</span>Enable the Serial Module</div>
-      <p>Via Meshtastic app → <strong>Module Config → Serial</strong>, or via CLI:</p>
+      <p><strong>Recommended — automated script:</strong> this repo ships <code>scripts/flash-heltec-meshtastic.sh</code>, which downloads the latest stock Meshtastic release, flashes the Heltec V3, applies the full gate-sensor config (region, private channel PSK, serial module, GPS disabled, Bluetooth disabled, owner <code>GateSensor</code>/<code>GATE</code>) and verifies every setting. Copy <code>.env.example</code> to <code>.env</code>, set your 256-bit <code>MESH_PSK</code>, then:</p>
+<pre>
+./scripts/flash-heltec-meshtastic.sh              <span class="c"># auto-detect, EU_868, latest stable</span>
+./scripts/flash-heltec-meshtastic.sh -r US        <span class="c"># US region</span>
+./scripts/flash-heltec-meshtastic.sh --help       <span class="c"># all flags (flash-only, config-only, confirm-config)</span>
+</pre>
+      <p><strong>Manual equivalent</strong> (if you prefer to run the settings by hand, Meshtastic app → <strong>Module Config → Serial</strong>, or via CLI):</p>
 <pre>
 <span class="c"># Using meshtastic Python CLI (pip install meshtastic)</span>
 meshtastic --set serial.enabled true
-meshtastic --set serial.mode TEXT
-meshtastic --set serial.rxd 47        <span class="c"># Heltec V3 default RXD</span>
-meshtastic --set serial.txd 43        <span class="c"># Heltec V3 default TXD</span>
+meshtastic --set serial.mode TEXTMSG
+meshtastic --set serial.rxd 47        <span class="c"># GPIO47 — Nano D3 via 2.2k/3.3k divider</span>
+meshtastic --set serial.txd 48        <span class="c"># Parked on unused GPIO. MUST NOT be 0 (strap pin) — kills RX.</span>
 meshtastic --set serial.baud BAUD_9600
-meshtastic --set serial.timeout 1000
-meshtastic --set serial.channel 0     <span class="c"># Send to channel 0 (your private channel)</span>
+meshtastic --set serial.timeout 0
 </pre>
       <div class="ok-box"><strong>✓</strong> Any text line terminated with <code>\n</code> sent to the Heltec UART at 9600 baud is broadcast as a channel message. No additional code runs on the Heltec.</div>
     </div>
@@ -905,42 +910,41 @@ meshtastic --set serial.channel 0     <span class="c"># Send to channel 0 (your 
   <div class="phase-body">
 
     <div class="step">
-      <div class="step-title"><span class="step-num">1</span>Install rc-switch library</div>
-      <p>In Arduino IDE: <strong>Sketch → Include Library → Manage Libraries</strong> → search <em>rc-switch</em> → Install.</p>
+      <div class="step-title"><span class="step-num">1</span>Skip this phase if you bought the reference KERUI D026</div>
+      <p>The firmware ships with <code>CODE_OPEN = 150910</code> pre-calibrated to the KERUI D026 used in this build. Flash it with <code>make upload</code> and try triggering the sensor — if you see <code>Gate: TRIGGERED</code> on the mesh you are done, skip to Phase 4.</p>
+      <p>If you are using a different 433&nbsp;MHz sensor, continue below.</p>
     </div>
 
     <div class="step">
-      <div class="step-title"><span class="step-num">2</span>Upload the code-learning sketch</div>
+      <div class="step-title"><span class="step-num">2</span>Flash the production firmware and open the learning monitor</div>
+      <p>No separate learning sketch is needed — <code>firmware/src/main.cpp</code> already prints every decoded RF value to USB serial as <code>RF unknown: &lt;decimal&gt;</code> whenever the code doesn't match <code>CODE_OPEN</code>.</p>
 <pre>
-<span class="k">#include</span> <span class="s">&lt;RCSwitch.h&gt;</span>
-
-RCSwitch rf = RCSwitch();
-
-<span class="k">void</span> <span class="f">setup</span>() {
-  Serial.<span class="f">begin</span>(115200);
-  rf.<span class="f">enableReceive</span>(4); <span class="c">// RXB6 DATA → Nano D2 (INT0)</span>
-}
-
-<span class="k">void</span> <span class="f">loop</span>() {
-  <span class="k">if</span> (rf.<span class="f">available</span>()) {
-    Serial.<span class="f">printf</span>(<span class="s">"Code: %lu  Bits: %d  Protocol: %d\n"</span>,
-      rf.<span class="f">getReceivedValue</span>(),
-      rf.<span class="f">getReceivedBitlength</span>(),
-      rf.<span class="f">getReceivedProtocol</span>());
-    rf.<span class="f">resetAvailable</span>();
-  }
-}
+make upload          <span class="c"># compile + flash the Nano (PlatformIO via the Makefile)</span>
+make learn-sensor    <span class="c"># stream USB serial at 115200 baud — a thin wrapper around `pio device monitor`</span>
 </pre>
     </div>
 
     <div class="step">
-      <div class="step-title"><span class="step-num">3</span>Record open and close codes</div>
-      <p>Open Serial Monitor at 115200 baud. Open and close your sensor several times. You will see two distinct codes — note them both. Example output:</p>
+      <div class="step-title"><span class="step-num">3</span>Trigger the sensor and note the repeating decimal</div>
+      <p>Open and close the sensor several times. Each trigger emits a burst of 4–10 identical retransmissions. Ignore one-off values (RF noise, neighbouring remotes).</p>
 <pre>
-Code: 1234561  Bits: 24  Protocol: 1   <span class="c">← gate OPEN</span>
-Code: 1234560  Bits: 24  Protocol: 1   <span class="c">← gate CLOSED</span>
+RF unknown: 150910
+RF unknown: 150910
+RF unknown: 150910
 </pre>
-      <div class="info-box"><strong>ℹ</strong> The code repeats 3–5 times per event (RF retransmission). This is normal. You only need the unique value, not the duplicates.</div>
+      <div class="info-box"><strong>ℹ</strong> Most 433&nbsp;MHz door sensors (EV1527, PT2260, KERUI) emit the <em>same</em> code on open and close. The firmware uses a 10&nbsp;s debounce to collapse each retransmit burst into a single <code>Gate: TRIGGERED</code> mesh event — so you normally only need one code per sensor. If your sensor emits distinct open and close codes (e.g. Sonoff DW2-RF), record both.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">4</span>Update <code>firmware/include/config.h</code> and re-flash</div>
+<pre>
+<span class="n">#define</span> CODE_OPEN    <span class="v">150910</span>   <span class="c">// your learned value</span>
+<span class="n">#define</span> CODE_CLOSED  <span class="v">0</span>        <span class="c">// disabled — most sensors don't emit a distinct close code</span>
+</pre>
+<pre>
+make upload      <span class="c"># re-flash the Nano with your learned code</span>
+make monitor     <span class="c"># confirm you now see `Gate: TRIGGERED` lines on physical triggers</span>
+</pre>
     </div>
 
   </div>
@@ -958,85 +962,48 @@ Code: 1234560  Bits: 24  Protocol: 1   <span class="c">← gate CLOSED</span>
   <div class="phase-body">
 
     <div class="step">
-      <div class="step-title"><span class="step-num">1</span>Required libraries</div>
-      <p>Install via Arduino IDE Library Manager:</p>
-      <ul>
-        <li><strong>rc-switch</strong> — 433&nbsp;MHz receive</li>
-        <li><strong>SoftwareSerial</strong> — included with Arduino core, no install needed</li>
-      </ul>
+      <div class="step-title"><span class="step-num">1</span>Use the pre-built PlatformIO project</div>
+      <p>The bridge firmware is maintained as a PlatformIO project in <code>firmware/</code>. It pulls the <strong>rc-switch</strong> library automatically — no Arduino IDE library installs needed. The top-level <code>Makefile</code> wraps the PlatformIO commands:</p>
+<pre>
+make build          <span class="c"># compile</span>
+make upload         <span class="c"># flash the Nano via USB (auto-detects port)</span>
+make monitor        <span class="c"># serial monitor at 115200 baud (Nano debug echo)</span>
+make learn-sensor   <span class="c"># discover a new 433 MHz sensor code (Phase 2)</span>
+make clean          <span class="c"># remove build artifacts</span>
+</pre>
+      <div class="warn-box"><strong>⚠ Board selection:</strong> cheap CH340 Nano clones now ship with the newer <strong>optiboot</strong> 115200&nbsp;baud bootloader, so <code>firmware/platformio.ini</code> uses <code>board = nanoatmega328new</code>. If upload fails with a timeout, downgrade to <code>board = nanoatmega328</code> (57600&nbsp;baud old bootloader).</div>
     </div>
 
     <div class="step">
-      <div class="step-title"><span class="step-num">2</span>Full bridge sketch — paste your codes at the top</div>
+      <div class="step-title"><span class="step-num">2</span>Configure your sensor code in <code>firmware/include/config.h</code></div>
 <pre>
-<span class="k">#include</span> <span class="s">&lt;RCSwitch.h&gt;</span>
-<span class="k">#include</span> <span class="s">&lt;SoftwareSerial.h&gt;</span>
+<span class="c">// --- 433 MHz Sensor Codes ---</span>
+<span class="n">#define</span> CODE_OPEN    <span class="v">150910</span>   <span class="c">// KERUI D026 reference value — replace with your own learned code</span>
+<span class="n">#define</span> CODE_CLOSED  <span class="v">0</span>        <span class="c">// disabled — sensor emits same code on open/close</span>
 
-<span class="c">// ── Config ─────────────────────────────────────────</span>
-<span class="n">#define</span> CODE_OPEN     <span class="v">1234561UL</span>   <span class="c">// ← replace with your OPEN code</span>
-<span class="n">#define</span> CODE_CLOSED   <span class="v">1234560UL</span>   <span class="c">// ← replace with your CLOSED code</span>
-<span class="n">#define</span> SENSOR_NAME   <span class="s">"Gate"</span>
+<span class="c">// --- Sensor Identity ---</span>
+<span class="n">#define</span> SENSOR_NAME  <span class="s">"Gate"</span>
 
-<span class="n">#define</span> RF_PIN        <span class="v">2</span>           <span class="c">// RXB6 DATA pin (now D2)</span>
+<span class="c">// --- Pin Assignments ---</span>
+<span class="n">#define</span> RF_PIN       <span class="v">2</span>   <span class="c">// RXB6 DATA → Nano D2 (INT0 for rc-switch)</span>
+<span class="n">#define</span> SERIAL_TX    <span class="v">3</span>   <span class="c">// Nano D3 → 2.2k/3.3k divider → Heltec GPIO47</span>
+<span class="n">#define</span> SERIAL_RX    <span class="v">4</span>   <span class="c">// Unused (placeholder for SoftwareSerial)</span>
 
-<span class="c">// Timing</span>
-<span class="n">#define</span> HEARTBEAT_MS   <span class="v">300000UL</span>  <span class="c">// 5 min heartbeat</span>
-<span class="n">#define</span> DEBOUNCE_MS       <span class="v">200UL</span>  <span class="c">// ignore retransmits</span>
-
-<span class="c">// ── Objects ────────────────────────────────────────</span>
-RCSwitch rf = RCSwitch();
-SoftwareSerial meshSerial(<span class="v">4</span>, <span class="v">3</span>); <span class="c">// RX=D4(unused), TX=D3 → Heltec GPIO47</span>
-
-<span class="c">// ── State ──────────────────────────────────────────</span>
-<span class="k">unsigned long</span> lastHeartbeat = <span class="v">0</span>;
-<span class="k">unsigned long</span> lastRFEvent   = <span class="v">0</span>;
-
-<span class="c">// ── Send to Meshtastic ──────────────────────────────</span>
-<span class="k">void</span> <span class="f">sendMesh</span>(String msg) {
-  meshSerial.<span class="f">println</span>(msg);
-  Serial.<span class="f">println</span>(<span class="s">"TX: "</span> + msg);
-}
-
-<span class="c">// ── Heartbeat ───────────────────────────────────────</span>
-<span class="k">void</span> <span class="f">sendHeartbeat</span>() {
-  <span class="f">sendMesh</span>(<span class="s">"GATE NODE: Online"</span>);
-}
-
-<span class="c">// ── Setup ────────────────────────────────────────────</span>
-<span class="k">void</span> <span class="f">setup</span>() {
-  Serial.<span class="f">begin</span>(115200);
-  meshSerial.<span class="f">begin</span>(9600);
-  rf.<span class="f">enableReceive</span>(RF_PIN);
-  delay(<span class="v">1000</span>);
-  <span class="f">sendHeartbeat</span>(); <span class="c">// announce online at boot</span>
-}
-
-<span class="c">// ── Loop ─────────────────────────────────────────────</span>
-<span class="k">void</span> <span class="f">loop</span>() {
-  <span class="k">unsigned long</span> now = <span class="f">millis</span>();
-
-  <span class="c">// ── 433MHz event ──────────────────────────────────</span>
-  <span class="k">if</span> (rf.<span class="f">available</span>()) {
-    <span class="k">unsigned long</span> code = rf.<span class="f">getReceivedValue</span>();
-
-    <span class="c">// debounce: ignore retransmits within 200ms</span>
-    <span class="k">if</span> (now - lastRFEvent > DEBOUNCE_MS) {
-      lastRFEvent = now;
-
-      <span class="k">if</span> (code == CODE_OPEN)   <span class="f">sendMesh</span>(SENSOR_NAME + String(<span class="s">": OPEN"</span>));
-      <span class="k">if</span> (code == CODE_CLOSED) <span class="f">sendMesh</span>(SENSOR_NAME + String(<span class="s">": CLOSED"</span>));
-    }
-    rf.<span class="f">resetAvailable</span>();
-  }
-
-  <span class="c">// ── Heartbeat every 5 min ─────────────────────────</span>
-  <span class="k">if</span> (now - lastHeartbeat >= HEARTBEAT_MS) {
-    <span class="f">sendHeartbeat</span>();
-    lastHeartbeat = now;
-  }
-}
+<span class="c">// --- Timing (milliseconds) ---</span>
+<span class="n">#define</span> HEARTBEAT_MS   <span class="v">300000</span>   <span class="c">// 5 min heartbeat</span>
+<span class="n">#define</span> DEBOUNCE_MS    <span class="v">10000</span>    <span class="c">// 10 s — collapses KERUI retransmit bursts into one event</span>
+<span class="n">#define</span> MESH_BAUD      <span class="v">9600</span>     <span class="c">// matches Meshtastic serial module</span>
 </pre>
-      <div class="warn-box"><strong>⚠ Board selection:</strong> In Arduino IDE select <strong>Arduino Nano</strong> · Processor: <em>ATmega328P (Old Bootloader)</em> for most cheap CH340 Nano clones.</div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="step-num">3</span>Firmware behaviour — <code>firmware/src/main.cpp</code></div>
+      <p>The loop does two things:</p>
+      <ul>
+        <li><strong>RF event.</strong> If <code>rc-switch</code> decodes a code that matches <code>CODE_OPEN</code> <em>and</em> the 10&nbsp;s debounce window has elapsed, the firmware sends <code>Gate: TRIGGERED</code> on both SoftwareSerial (to the Heltec / mesh) and USB serial (to the monitor). If the code matches <code>CODE_CLOSED</code>, it sends <code>Gate: CLOSED</code>. Unrecognised codes are logged on USB only as <code>RF unknown: &lt;decimal&gt;</code>.</li>
+        <li><strong>Heartbeat.</strong> Every 5&nbsp;minutes it sends <code>GATE NODE: Online</code> on both UARTs so the mesh can tell the node is alive.</li>
+      </ul>
+      <p>No custom SoftwareSerial RX pin is used — the Nano only transmits to the Heltec. That keeps the bridge strictly one-way (mesh → no effect on the sensor).</p>
     </div>
 
   </div>
@@ -1098,11 +1065,13 @@ SoftwareSerial meshSerial(<span class="v">4</span>, <span class="v">3</span>); <
 <span class="hl2">         └──────────────────────────────────────────────────────────┘</span>
 
 <span class="hl">         ┌──────────────────────────────────────────────────────────┐</span>
-<span class="hl">         │                 RXB6 433MHz Receiver                     │</span>
+<span class="hl">         │                 RXB6 433MHz Receiver (8-pin SIP)         │</span>
 <span class="hl">         │                                                          │</span>
-<span class="hl">         │  VCC  ◄─────── 3.3V (Nano 3.3V pin)                      │</span>
-<span class="hl">         │  GND  ◄─────── GND (shared)                              │</span>
-<span class="hl">         │  DATA ──────► Nano D2 (INT0)                                    │</span>
+<span class="hl">         │  VDD (pins 4,5) ◄── 5V (shared bus — 5V, not 3.3V)       │</span>
+<span class="hl">         │  GND (pins 2,3,8) ◄── GND (shared)                       │</span>
+<span class="hl">         │  DE  (pin 6)  ── R5 10k pull-up to 5V  (optional / DNP)  │</span>
+<span class="hl">         │  DATA (pin 7) ──► Nano D2 (INT0)                         │</span>
+<span class="hl">         │  ANT (pin 1) ──► 17.3cm wire or SMA bulkhead             │</span>
 <span class="hl">         └──────────────────────────────────────────────────────────┘</span>
 
          Logic Level Divider — Nano TX (5V) → Heltec GPIO47 (3.3V max):
@@ -1228,15 +1197,14 @@ SoftwareSerial meshSerial(<span class="v">4</span>, <span class="v">3</span>); <
     <div class="enclosure-wrap">
       <div class="enclosure-caption">Private channel — example messages</div>
       <div class="diagram" style="padding:16px 20px;">
-<span class="hl">Gate: OPEN</span>              <span class="hl2">← gate opened</span>
-<span class="hl">Gate: CLOSED</span>            <span class="hl2">← gate closed</span>
+<span class="hl">Gate: TRIGGERED</span>         <span class="hl2">← gate opened or closed (KERUI D026 emits one code)</span>
 GATE NODE: Online       <span class="hl2">← heartbeat every 5 min</span>
 GATE NODE: Online       <span class="hl2">← heartbeat</span>
-<span class="hl">Gate: OPEN</span>              <span class="hl2">← another event</span>
+<span class="hl">Gate: TRIGGERED</span>         <span class="hl2">← another event, after the 10 s debounce</span>
       </div>
     </div>
 
-    <div class="info-box" style="margin-top:14px;"><strong>ℹ Multiple sensors:</strong> To monitor multiple doors, add more <code>CODE_OPEN_n</code> / <code>CODE_CLOSED_n</code> pairs and unique sensor names in the sketch. The RXB6 listens to all 433&nbsp;MHz sensors simultaneously. No hardware changes needed.</div>
+    <div class="info-box" style="margin-top:14px;"><strong>ℹ Multiple sensors:</strong> the RXB6 listens to all 433&nbsp;MHz sensors simultaneously. To monitor several doors from one node, extend <code>firmware/src/main.cpp</code> with a table of <code>(code, name)</code> pairs and dispatch the right <code>Name: TRIGGERED</code> message per match. No hardware changes needed. For fleets, prefer one small bridge node per door — it gives you per-sensor RSSI, isolated debounce windows, and independent mesh routing.</div>
 
   </div>
 </div>
@@ -1261,19 +1229,22 @@ GATE NODE: Online       <span class="hl2">← heartbeat</span>
 
     <h3 class="sh">Board Summary — what the script produces</h3>
     <div class="diagram" style="font-size:12px; line-height:1.6;">
-  90 × 75 mm  ·  2-layer  ·  1.6 mm FR4  ·  HASL finish
+  75 × 66 mm  ·  2-layer  ·  1.6 mm FR4  ·  HASL (lead-free) finish  ·  0 DRC violations
 
   U3  Heltec LoRa32 V3    18-pin + 18-pin female socket  (22.86 mm row sep)
       USB-C access notch cut into top edge of board
-      All 43 GPIO pins labelled on silkscreen
+      All 36 module pins labelled on silkscreen
 
   U1  Arduino Nano         2×15 female socket  (15.24 mm row sep (600 mil))
       All 30 pins labelled on silkscreen
 
-  U2  RXB6 433 MHz         1×4 direct solder holes  0.9 mm drill
+  U2  RXB6 433 MHz         8-pin SIP direct solder (2 groups of 4, 25.4 mm gap, 0.9 mm drill)
 
   R1  2.2 kΩ  THT axial    D3 → logic level junction
-  R2  3.3 kΩ  THT axial    logic level junction → GND
+  R2  3.3 kΩ  THT axial    logic level junction → GND (5V × 3.3/5.5 = 3.0V for GPIO47)
+  R5  10 kΩ   THT axial    Optional (DNP) — DE pull-up for RXB6 pin 6
+  C1  100 nF  ceramic      bypass cap near RXB6 VDD
+  C2  100 µF  electrolytic bulk cap on the 5V bus near J4
   J2  5V IN    2-pin screw terminal 5.08 mm    +5V / GND from Waveshare
   J4  PWR SW   JST-PH 2-pin 2.0 mm             inline power switch
 
@@ -1546,15 +1517,19 @@ Search: "JST PH 2pin inline switch"
       <tbody>
         <tr>
           <td>Meshtastic receives no messages from UART</td>
-          <td>Check that <code>serial.enabled true</code> and <code>serial.mode TEXT</code> are set in Meshtastic module config. Verify baud rate matches (9600 on both Nano and Meshtastic). Check that Nano TX → Heltec GPIO47 (not GPIO43 which is TX). Swap RX/TX if swapped.</td>
+          <td>Re-run <code>./scripts/flash-heltec-meshtastic.sh --confirm-config</code> to verify <code>serial.enabled=true</code>, <code>serial.mode=TEXTMSG</code>, <code>serial.rxd=47</code>, <code>serial.txd=48</code>, <code>serial.baud=BAUD_9600</code>. Verify the Nano side matches (<code>MESH_BAUD 9600</code> in <code>config.h</code>). Check that Nano D3 → 2.2k → GPIO47 (not GPIO44 — that's shared with the CP2102 USB-UART).</td>
         </tr>
         <tr>
-          <td>RCSwitch receives no codes / garbage values</td>
-          <td>RXB6 is on 5V — verify VCC (pins 4+5) is connected to the 5V bus. Check DATA pin (pin 7) is on Nano D2 (INT0). Try moving sensor closer during first test. Use a short wire antenna on the RXB6 ANT pin (17.3&nbsp;cm for 433&nbsp;MHz) for better range.</td>
+          <td>Meshtastic serial RX dies after a config change</td>
+          <td>If <code>serial.txd</code> got set to <code>0</code>, the ESP32-S3 UART init fails silently and also disables RX on the configured rxd pin. GPIO0 is the boot strap pin and is not usable here. Re-run the flash script to reset <code>txd=48</code>.</td>
+        </tr>
+        <tr>
+          <td>rc-switch receives no codes / garbage values</td>
+          <td>RXB6 is on 5V — verify VDD (pins 4+5) is connected to the 5V bus. Check DATA (pin 7) reaches Nano D2 (INT0). Try moving the sensor closer during the first test. Use a 17.3&nbsp;cm wire antenna on RXB6 ANT (pin 1) for best range.</td>
         </tr>
         <tr>
           <td>Same code fires repeatedly / debounce not working</td>
-          <td>433&nbsp;MHz sensors retransmit 3–10 times per event. The <code>DEBOUNCE_MS</code> check in the loop suppresses duplicates. Increase to 500ms if still seeing doubles in Meshtastic.</td>
+          <td>The firmware debounces at <code>DEBOUNCE_MS = 10000</code> (10&nbsp;s), which collapses the KERUI retransmit burst into one mesh event per physical opening. If you see duplicates, confirm you're running the latest firmware — older builds shipped with 200&nbsp;ms which let the retransmits through.</td>
         </tr>
         <tr>
           <td>Heltec not detected by Meshtastic app after flash</td>
@@ -1570,8 +1545,8 @@ Search: "JST PH 2pin inline switch"
           <td>Normal — Meshtastic dims the OLED after a timeout to save power. Press the button on the Heltec to wake it. OLED shows node info, channel, battery level.</td>
         </tr>
         <tr>
-          <td>Gate sensor code not recognized (wrong code)</td>
-          <td>Re-run the code-learning sketch in Phase 2. The KERUI D026 uses KERUI encoding rather than plain EV1527 — rc-switch can still read it but the protocol number may differ. Make sure rc-switch captures a stable repeating code on open AND close separately. If only one code appears, the sensor may be open-only — switch to KERUI D026 or Sonoff DW2-RF which both send open+close. If Protocol 2 or 3 appears, add <code>rf.setProtocol(2)</code> before <code>enableReceive</code>.</td>
+          <td>Gate sensor code not recognised (wrong code)</td>
+          <td>Run <code>make learn-sensor</code> — the production firmware prints every decoded RF value on USB serial as <code>RF unknown: &lt;decimal&gt;</code>. Look for a value that repeats 4–10 times on each physical trigger, ignore one-offs (noise, neighbour remotes). Copy that decimal into <code>CODE_OPEN</code> in <code>firmware/include/config.h</code>, then <code>make upload</code>. Most cheap 433&nbsp;MHz sensors (EV1527, PT2260, KERUI) emit the same code on open and close — <code>CODE_CLOSED</code> stays at <code>0</code>.</td>
         </tr>
         <tr>
           <td>Meshtastic duty cycle warning (EU)</td>
@@ -1589,7 +1564,7 @@ Search: "JST PH 2pin inline switch"
 </div><!-- /container -->
 
 <footer class="site-footer">
-  Gate Sensor LoRa · Meshtastic Build Guide &amp; BOM v2 — total build cost ~$50 · Heltec V3 · Arduino Nano · RXB6 · 433MHz sensor · Waveshare Solar D · 2× 18650 · 6V 2W solar panel · IP65 enclosure · Custom carrier PCB 75×66mm · KiCad · JLCPCB
+  Gate Sensor LoRa · Meshtastic Build Guide &amp; BOM v2.3 — ~$52 with solar · ~$36 bare · Heltec V3 · Arduino Nano · RXB6 · 433MHz sensor · Waveshare Solar D · 2× 18650 · 6V 2W solar panel · IP65 enclosure · Custom carrier PCB 75×66mm · KiCad · JLCPCB
 </footer>
 
 </body>
