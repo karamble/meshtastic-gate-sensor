@@ -95,4 +95,4 @@ Trigger the sensor a few times and watch for repeating `RF unknown: <decimal>` l
 
 ## License
 
-MIT
+ISC — see [LICENSE](LICENSE).
