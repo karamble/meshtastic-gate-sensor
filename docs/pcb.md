@@ -168,3 +168,4 @@ make pcb-upgrade  # upgrade to KiCad 10 format
 
 - **v2.0**: Initial 2-layer design
 - **v2.2**: DRC fixes — removed VIN/5V short, B.Cu GND drops with offset vias, B.Cu D4 routing to fix D4/GND short, 3V3 bus rerouted, text minimums enforced, 22 vias for proper 2-layer routing
+- **v2.3**: Removed battery-voltage monitoring, added 3D assembly view generator, R5 silkscreen label placed above the resistor body (was on F.Fab only in v2.2). 0 DRC violations, 34/34 netlist self-test checks pass.

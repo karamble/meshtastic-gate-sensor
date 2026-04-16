@@ -310,8 +310,8 @@ def _build():
     r5.pad("1", R5_X1, R5_Y, 0.8, 1.6, V5, True)
     r5.pad("2", R5_X2, R5_Y, 0.8, 1.6, DE_NET)
     fab_box(R5_X1 - 1.2, R5_Y - 1.4, R5_X2 + 1.2, R5_Y + 1.4)
-    txt("R5 10k", R5_X1, R5_Y + 2.5, layer="F.Fab")
-    txt("DE pullup", R5_X1, R5_Y + 2.5, layer="F.Fab")
+    txt("R5 10k", (R5_X1+R5_X2)/2, R5_Y - 3.0)
+    txt("DE pullup", (R5_X1+R5_X2)/2, R5_Y + 2.5, layer="F.Fab")
 
     # C1 (100nF) — bypass cap near RXB6 VDD (pin 4)
     # Placed left of RXB6, vertical, between V5 and GND
