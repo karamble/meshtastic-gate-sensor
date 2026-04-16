@@ -27,6 +27,7 @@ help:
 	@echo "    make build         Compile firmware"
 	@echo "    make upload        Flash to Arduino Nano"
 	@echo "    make monitor       Serial monitor (115200 baud)"
+	@echo "    make learn-sensor  Watch USB serial to discover a new 433 MHz sensor's code"
 	@echo "    make clean         Clean build artifacts"
 
 # --- KiCad targets ---
@@ -109,7 +110,7 @@ test-netlist:
 
 # --- PlatformIO targets ---
 
-.PHONY: build upload monitor clean
+.PHONY: build upload monitor clean learn-sensor
 
 build:
 	cd firmware && pio run
@@ -122,3 +123,21 @@ monitor:
 
 clean:
 	cd firmware && pio run -t clean
+
+# Learn a new 433 MHz door sensor's code — see docs/learn-sensor.md.
+# The production firmware logs every decoded RF hit on USB serial; any
+# code that doesn't match CODE_OPEN prints as `RF unknown: <decimal>`.
+# Trigger the sensor, note the repeating decimal, set CODE_OPEN in
+# firmware/include/config.h, and re-run `make upload`.
+learn-sensor:
+	@echo ""
+	@echo "  Sensor Learning Mode — see docs/learn-sensor.md"
+	@echo ""
+	@echo "  1. Trigger the sensor a few times."
+	@echo "  2. Watch for repeating lines:  RF unknown: <decimal>"
+	@echo "  3. Copy the decimal into CODE_OPEN in firmware/include/config.h"
+	@echo "     then run: make upload"
+	@echo ""
+	@echo "  Press Ctrl+] to exit the monitor."
+	@echo ""
+	cd firmware && pio device monitor -b 115200
