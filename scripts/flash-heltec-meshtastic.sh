@@ -308,13 +308,19 @@ gh release download "$VERSION" \
 
 unzip -q "$ZIP_PATH" -d "$TMPDIR/fw"
 
-FW_BIN=$(find "$TMPDIR/fw" -name "firmware-heltec-v3-*.factory.bin" | head -1)
+# Release asset naming: the main factory image is `firmware-heltec-v3-<ver>.bin`
+# (no .factory.bin suffix since ~2.7). The `*-update.bin` sibling is the OTA
+# delta image and must be excluded — flashing it at 0x00 overwrites the
+# bootloader and bricks the device until it's re-flashed in boot mode.
+FW_BIN=$(find "$TMPDIR/fw" -name "firmware-heltec-v3-*.bin" ! -name "*-update.bin" | head -1)
 BLEOTA_BIN=$(find "$TMPDIR/fw" -name "bleota-s3.bin" | head -1)
 LITTLEFS_BIN=$(find "$TMPDIR/fw" -name "littlefs-heltec-v3-*.bin" | head -1)
 
 if [ -z "$FW_BIN" ] || [ ! -f "$BLEOTA_BIN" ] || [ -z "$LITTLEFS_BIN" ]; then
     log_error "Could not find required firmware files in download"
-    echo "  Looking for: firmware-heltec-v3-*.factory.bin, bleota-s3.bin, littlefs-heltec-v3-*.bin"
+    echo "  Looking for: firmware-heltec-v3-*.bin (non-update), bleota-s3.bin, littlefs-heltec-v3-*.bin"
+    echo "  Extracted files:"
+    ls "$TMPDIR/fw/" | head -20 | sed 's/^/    /'
     exit 1
 fi
 
@@ -426,7 +432,8 @@ elif [ "$CONFIRM_CONFIG" = true ]; then
     verify_get "position.gps_mode" "NOT_PRESENT\|2"         || VERIFY_FAIL=1
     verify_get "serial.enabled" "true\|True"                || VERIFY_FAIL=1
     verify_get "serial.rxd" "47"                            || VERIFY_FAIL=1
-    verify_get "serial.baud" "BAUD_9600\|1"                 || VERIFY_FAIL=1
+    verify_get "serial.txd" "48"                            || VERIFY_FAIL=1
+    verify_get "serial.baud" "BAUD_9600\|7"                 || VERIFY_FAIL=1
     verify_get "serial.mode" "TEXTMSG\|3"                   || VERIFY_FAIL=1
     verify_get "bluetooth.enabled" "false\|False"           || VERIFY_FAIL=1
 
@@ -466,18 +473,24 @@ else
     mesh_cmd "Setting telemetry broadcast interval to 30 min..." \
         --set telemetry.device_update_interval 1800
 
-    # Gate sensor serial config:
-    #   rxd=47 (GPIO47, avoids CP2102 conflict on GPIO44)
-    #   txd=0  (disabled — Nano does not receive from Heltec)
-    #   baud=BAUD_9600 (matches Arduino Nano SoftwareSerial)
-    mesh_cmd "Setting serial module for gate sensor (GPIO47 RX, 9600 baud)..." \
+    # Serial module:
+    #   rxd=47 — GPIO47 for serial RX (avoids CP2102 conflict on GPIO44)
+    #   txd=48 — parked on an unused GPIO. MUST NOT be 0: GPIO0 is the ESP32-S3
+    #           boot strap pin, and passing it to the UART driver init fails
+    #           and silently kills RX on rxd as well. 48 is unused on this PCB.
+    #   baud=BAUD_9600 — matches the Nano SoftwareSerial TX rate
+    mesh_cmd "Setting serial module (rxd=47 txd=48 baud=BAUD_9600)..." \
         --set serial.enabled true \
         --set serial.echo false \
         --set serial.rxd 47 \
-        --set serial.txd 0 \
+        --set serial.txd 48 \
         --set serial.baud BAUD_9600 \
         --set serial.timeout 0 \
         --set serial.mode TEXTMSG
+
+    mesh_cmd "Setting device owner (long=GateSensor, short=GATE)..." \
+        --set-owner "GateSensor" \
+        --set-owner-short "GATE"
 
     mesh_cmd "Disabling Bluetooth..." \
         --set bluetooth.enabled false
@@ -524,7 +537,8 @@ else
     verify_get "position.gps_mode" "NOT_PRESENT\|2"         || VERIFY_FAIL=1
     verify_get "serial.enabled" "true\|True"                || VERIFY_FAIL=1
     verify_get "serial.rxd" "47"                            || VERIFY_FAIL=1
-    verify_get "serial.baud" "BAUD_9600\|1"                 || VERIFY_FAIL=1
+    verify_get "serial.txd" "48"                            || VERIFY_FAIL=1
+    verify_get "serial.baud" "BAUD_9600\|7"                 || VERIFY_FAIL=1
     verify_get "serial.mode" "TEXTMSG\|3"                   || VERIFY_FAIL=1
     verify_get "bluetooth.enabled" "false\|False"           || VERIFY_FAIL=1
 
