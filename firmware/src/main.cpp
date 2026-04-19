@@ -347,6 +347,10 @@ void setup() {
     // Code registry
     loadCodes();
 
+    // Heltec ESP32 + Meshtastic needs several seconds to boot and open its
+    // Serial module; sending STATUS earlier drops the frame into a dead UART.
+    delay(8000);
+
     sendStatus();
     lastStatus = millis();
 }
