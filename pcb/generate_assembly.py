@@ -78,11 +78,7 @@ MODELS = {
         (f"{M}/Resistor_THT.3dshapes/R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal.step",
          (-2.54, 0, 0), (0, 0, 0)),
     ],
-    # R6 (4.7k): horizontal, pad1(-X)=HELTEC_TX, pad2(+X)=D4
-    "R6": [
-        (f"{M}/Resistor_THT.3dshapes/R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal.step",
-         (-2.54, 0, 0), (0, 0, 0)),
-    ],
+    # R6 removed in v2.5 — GPIO48 -> D4 is a direct trace.
 
     # ── Capacitors ──
     # C1 (100nF): ceramic disc, 2.54mm pitch
@@ -195,7 +191,6 @@ Components with 3D models:
   R1  2.2k (level shift)  → Axial resistor
   R2  3.3k (level shift)  → Axial resistor (vertical)
   R5  10k (DE pullup)     → Axial resistor
-  R6  4.7k (GPIO48 series)→ Axial resistor
   C1  100nF (bypass)      → Ceramic disc cap
   C2  100uF (bulk)        → Electrolytic radial cap
   J2  SOLAR IN            → Screw terminal 5.08mm

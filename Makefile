@@ -60,7 +60,9 @@ pdf:
 	$(KICAD_RUN) pcb export pdf -o $(OUTPUT_DIR)/board.pdf $(PCB_FILE)
 
 pcb-stats:
-	$(KICAD_RUN) pcb export stats $(PCB_FILE)
+	@mkdir -p pcb/output
+	$(KICAD_RUN) pcb export stats -o $(OUTPUT_DIR)/pcb_stats.rpt $(PCB_FILE)
+	@cat pcb/output/pcb_stats.rpt
 
 pcb-upgrade:
 	$(KICAD_RUN) pcb upgrade $(PCB_FILE)

@@ -59,7 +59,6 @@ cd pcb && python3 gate_sensor_pcb_v2.py
 | R1 | 2.2k (logic divider series) | X=34-39, Y=24.7 | Horizontal, between RXB6 and Nano |
 | R2 | 3.3k (logic divider shunt) | X=34, Y=25.8-29.8 | Vertical, below R1 junction |
 | R5 | 10k (DE pull-up) | X=37.5-42.6, Y=47.6 | Horizontal, left of RXB6 pin 6 |
-| R6 | 4.7k (HELTEC_TX series) | X=48-53.1, Y=8.7 | Horizontal, top margin between Heltec and Nano |
 | C1 | 100nF ceramic (bypass) | X=38-40.5, Y=16 | Horizontal, near RXB6 VDD |
 | C2 | 100uF electrolytic (bulk) | X=20, Y=59-61 | Vertical, below V5/GND buses |
 
@@ -76,7 +75,7 @@ cd pcb && python3 gate_sensor_pcb_v2.py
 
 Used for all signal traces and most power traces:
 
-- **Signal traces** (0.25mm): D3 to R1, HELTEC_RX from R1/R2 junction to GPIO47, HELTEC_TX from GPIO48 through R6 to D4 (top-margin route with B.Cu vertical via, and B.Cu right-edge drop to D4), DE from R5 to RXB6
+- **Signal traces** (0.25mm): D3 to R1, HELTEC_RX from R1/R2 junction to GPIO47, HELTEC_TX direct from GPIO48 to Nano D4 (top-margin route with B.Cu vertical via at X=34 and B.Cu right-edge drop to R9), DE from R5 to RXB6
 - **Power traces** (0.50mm): V5 bus (horizontal, Y=56), GND bus (horizontal, Y=58, 0.60mm wide), V5_IN from J2 to J4, 5V drops to modules
 - **3V3**: Short bridge between Heltec R2 and R3 only
 
@@ -160,7 +159,7 @@ make pcb-upgrade  # upgrade to KiCad 10 format
 
 - Component outlines and reference designators on F.SilkS
 - Pin labels for all module pins (moved to F.Fab where they overlap copper)
-- Title block: "GATE SENSOR CARRIER v2.4 / 75x66mm 2L 1.6mm HASL"
+- Title block: "GATE SENSOR CARRIER v2.5 / 75x66mm 2L 1.6mm HASL"
 - Connector polarity markings (+5V, GND)
 - Switch symbol on J4
 - Verbose circuit notes on F.Fab (not visible on assembled board)
@@ -171,3 +170,4 @@ make pcb-upgrade  # upgrade to KiCad 10 format
 - **v2.2**: DRC fixes — removed VIN/5V short, B.Cu GND drops with offset vias, B.Cu D4 routing to fix D4/GND short, 3V3 bus rerouted, text minimums enforced, 22 vias for proper 2-layer routing
 - **v2.3**: Removed battery-voltage monitoring, added 3D assembly view generator, R5 silkscreen label placed above the resistor body (was on F.Fab only in v2.2). 0 DRC violations, 34/34 netlist self-test checks pass.
 - **v2.4**: Added bidirectional UART — Heltec GPIO48 (L14) → R6 (4.7k) → Nano D4 (R9). R6 series resistor protects the Nano from back-feed through its ESD clamp diodes when the Heltec is USB-powered alone (e.g. during flashing) and the 5V rail is off. HELTEC_TX routed on F.Cu east from L14 through the R14/R15 pad gap, B.Cu vertical at X=34 past the HELTEC_RX trace, F.Cu along the top margin at Y=8.7 to R6. D4 routed F.Cu along Y=8.7 then B.Cu right-edge drop to R9. 0 DRC violations, 40/40 netlist self-test checks pass.
+- **v2.5**: R6 removed — bring-up with the Meshtastic Serial module (TEXTMSG mode) proved the 4.7k series resistor attenuated the 3.3V signal below the ATmega328P's V_IH threshold at 5V logic, so zero bytes reached D4 until R6 was shorted out. HELTEC_TX is now a direct trace from Heltec GPIO48 (L14) to Nano D4 (R9), taking the same corridor the v2.4 HELTEC_TX/D4 pair used, just without the bridge at Y=8.7. Net count dropped by one (D4 net merged into HELTEC_TX). 0 DRC violations.

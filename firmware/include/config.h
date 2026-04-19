@@ -25,7 +25,7 @@
 // --- Pin Assignments ---
 #define RF_PIN      2   // RXB6 DATA -> Nano D2 (INT0 for RCSwitch)
 #define SERIAL_TX   3   // Nano D3 -> 2.2k/3.3k divider -> Heltec GPIO47
-#define SERIAL_RX   4   // Nano D4 <- R6 (4k7) <- Heltec GPIO48 (Meshtastic TX)
+#define SERIAL_RX   4   // Nano D4 <- direct trace <- Heltec GPIO48 (Meshtastic TX, PCB v2.5)
 
 // --- Timing (milliseconds) ---
 // STATUS frame is emitted on boot and every (hbIntervalMin * 60000) ms after.

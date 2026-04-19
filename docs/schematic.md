@@ -11,7 +11,7 @@
   | open/close|       | DE <-R5- |--+    |                |     |                |
   +-----------+       | VDD      |  |    | D3 (TX)  ------|--+  |                |
                       | GND      |  |    |                |  |  |                |
-                      +----------+  |    | D4 (RX) <-R6---|--|--|- GPIO48 (TX)   |
+                      +----------+  |    | D4 (RX) <------|--|--|- GPIO48 (TX)   |
                                     |    |           5V --|--|--|- 5V            |
                                     |    |          GND --|--|--|- GND           |
                                     |    +----------------+  |  |                |
@@ -42,9 +42,8 @@
 | 3V3 | 3.3V (Heltec only) | Heltec R2, R3 (bridged, not distributed) |
 | D3 | SoftwareSerial TX | Nano R10 (D3); R1 pad1 |
 | D2 | RF DATA | Nano R11 (D2/INT0); RXB6 pin 7 (DATA) |
-| D4 | SoftwareSerial RX | Nano R9 (D4); R6 pad2 |
 | HELTEC_RX | Level-shifted serial | R1 pad2; R2 pad1; Heltec L13 (GPIO47) |
-| HELTEC_TX | Heltec serial TX | Heltec L14 (GPIO48); R6 pad1 |
+| HELTEC_TX | Heltec serial TX (direct, v2.5) | Heltec L14 (GPIO48); Nano R9 (D4) |
 | DE | RXB6 data enable | RXB6 pin 6 (DE); R5 pad2 |
 
 **Note on D2 net:** This signal connects to physical pin D2 (L5), which provides INT0 for RCSwitch interrupt-driven reception. The firmware uses `RF_PIN 2` (D2).
@@ -63,7 +62,7 @@ Left row (L1-L18), top to bottom (USB end to antenna end):
 | L4 | Ve | -- | |
 | L5-L12 | GPIO44,TX43,RST,... | -- | Unused |
 | L13 | GPIO47 | HELTEC_RX | **Serial RX** (Meshtastic serial module) |
-| L14 | GPIO48 | HELTEC_TX | **Serial TX** (Meshtastic serial module) → R6 → Nano D4 |
+| L14 | GPIO48 | HELTEC_TX | **Serial TX** (Meshtastic serial module) → Nano D4 (direct, v2.5) |
 | L15-L18 | 26,21,20,19 | -- | Unused |
 
 Right row (R1-R18):
@@ -114,7 +113,7 @@ Two groups of 4 pins at 2.54mm pitch, 25.4mm gap between groups. Module body ext
 | 4 | 1 | VDD | 5V | Power (5V, not 3.3V) |
 | 5 | 2 | VDD | 5V | Power (5V) |
 | 6 | 2 | DE | DE | Data Enable (pulled high via R5) |
-| 7 | 2 | DATA | D4 | Data output to Nano D2 |
+| 7 | 2 | DATA | D2 | Data output to Nano D2 (INT0) |
 | 8 | 2 | GND | GND | Ground |
 
 ## Logic Level Divider (5V to 3.3V)
@@ -153,6 +152,5 @@ All modules are powered from the switched 5V bus. The Nano is powered via its 5V
 | Ref | Value | Purpose | Placement |
 |-----|-------|---------|-----------|
 | R5 | 10k | DE pull-up to 5V | Between V5 bus and RXB6 pin 6 (DE). Keeps data enable active. |
-| R6 | 4.7k | Series resistor on Heltec TX → Nano RX | Between Heltec GPIO48 and Nano D4. Limits back-feed current through Nano ESD clamp diode when Heltec is USB-powered alone (Nano Vcc=0). |
 | C1 | 100nF ceramic | Bypass capacitor | Near RXB6 VDD (pin 4). Filters high-frequency noise on power supply. |
 | C2 | 100uF electrolytic | Bulk capacitor | On V5/GND bus near J4 switch. Smooths inrush current and voltage dips. |

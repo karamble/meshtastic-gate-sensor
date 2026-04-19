@@ -13,7 +13,7 @@
 | 6 | 2x 18650 3000mAh | Battery backup (~57h) | $4 |
 | 7 | 6V 2W solar panel | Charging source | $4 |
 | 8 | IP65 junction box 150x100x70mm | Weatherproof enclosure | $3 |
-| 9 | Carrier PCB v2.4 (5x from JLCPCB) | 75x66mm custom board | $1 ea |
+| 9 | Carrier PCB v2.5 (5x from JLCPCB) | 75x66mm custom board | $1 ea |
 
 ## Passive Components
 
@@ -22,7 +22,6 @@
 | R1 | 2.2k | 1/4W axial | Logic level divider — series resistor (D3 to HELTEC_RX) |
 | R2 | 3.3k | 1/4W axial | Logic level divider — shunt to GND (produces 3.0V from 5V) |
 | R5 | 10k | 1/4W axial | **Optional — do-not-populate.** DE pull-up for RXB6 pin 6. Most RXB6 batches have an internal bias on DE, so the pin floats high on its own and the receiver runs fine with R5 omitted. Populate only if your specific unit stays in standby without it. |
-| R6 | 4.7k | 1/4W axial | Series resistor on Heltec GPIO48 → Nano D4 (SoftwareSerial RX). Protects the Nano's ESD clamp diodes from back-feed when the Heltec is USB-powered and the 5V rail is off (limits current to ~0.57 mA). |
 | C1 | 100nF | Ceramic disc/MLCC | Bypass capacitor near RXB6 VDD (high-frequency noise filter) |
 | C2 | 100uF | Electrolytic radial (6.3mm dia) | Bulk capacitor on 5V bus (inrush/ripple smoothing) |
 
