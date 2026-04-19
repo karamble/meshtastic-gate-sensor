@@ -260,8 +260,13 @@ static void handleCommand(const char* target, const char* verb, const char* para
 }
 
 // Parses "@<target> <verb>[:<param>[:...]]". Mutates line in place.
+// Meshtastic's Serial module in TEXTMSG mode prefixes received broadcasts with
+// "<sender-shortname>: " (e.g. "1e44: @GATE HB_OFF"). Skip past an optional
+// "<anything>: " prefix before looking for the '@' addressing token.
 static void processCmdLine(char* line) {
-    if (line[0] != '@') return;
+    char* at = strchr(line, '@');
+    if (!at) return;
+    line = at;
     char* space = strchr(line + 1, ' ');
     if (!space) return;
     *space = '\0';
