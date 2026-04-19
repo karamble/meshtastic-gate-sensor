@@ -2,6 +2,7 @@
 #include <EEPROM.h>
 #include <RCSwitch.h>
 #include <SoftwareSerial.h>
+#include <avr/wdt.h>
 #include <string.h>
 #include <stdlib.h>
 #include "config.h"
@@ -12,11 +13,17 @@ SoftwareSerial meshSerial(SERIAL_RX, SERIAL_TX);
 unsigned long lastStatus = 0;
 unsigned long lastRfEvent = 0;
 uint16_t bootCount = 0;
-uint32_t hitCount = 0;
+uint32_t hitCount = 0;                    // persisted in EEPROM
 
-// Runtime heartbeat config (loaded from EEPROM on boot, mutated by HB_* CMDs)
+// Runtime config (loaded from EEPROM on boot, mutated by CMDs)
 bool    hbEnabled     = true;
 uint8_t hbIntervalMin = DEFAULT_HB_MIN;
+uint8_t debounceSec   = DEFAULT_DEBOUNCE_SEC;
+
+// Dynamic 433 MHz code list. Empty slot sentinel = 0xFFFFFFFF (fresh EEPROM).
+uint32_t codes[MAX_CODES];
+uint8_t  codesCount = 0;
+#define CODE_EMPTY 0xFFFFFFFFUL
 
 // Inbound CMD line buffer
 char    cmdBuf[CMD_BUF_SIZE];
@@ -27,9 +34,9 @@ void sendMessage(const char* msg) {
     Serial.println(msg);  // Debug echo
 }
 
-void sendGateEvent(const char* state) {
+void sendEvent(const char* state, uint32_t code) {
     char buf[64];
-    snprintf(buf, sizeof(buf), "%s: %s", SENSOR_NAME, state);
+    snprintf(buf, sizeof(buf), "%s: %s:%lu", SENSOR_NAME, state, (unsigned long)code);
     sendMessage(buf);
 }
 
@@ -51,13 +58,114 @@ void sendStatus() {
     sendMessage(buf);
 }
 
-void sendHbAck(const char* status) {
-    char buf[48];
-    snprintf(buf, sizeof(buf), "%s: HB_ACK:%s", SENSOR_NAME, status);
+// Uniform ACK emitter: "<SENSOR_NAME>: <VERB>_ACK:<status>"
+void sendAck(const char* verb, const char* status) {
+    char buf[64];
+    snprintf(buf, sizeof(buf), "%s: %s_ACK:%s", SENSOR_NAME, verb, status);
     sendMessage(buf);
 }
 
-// True for ALL or the sensor's own name (case-insensitive).
+// ── EEPROM helpers ─────────────────────────────────────
+
+void saveHitCount() {
+    EEPROM.put(EEPROM_ADDR_HITS, hitCount);
+}
+
+void saveCodes() {
+    for (uint8_t i = 0; i < MAX_CODES; i++) {
+        EEPROM.put(EEPROM_ADDR_CODES + i * 4, codes[i]);
+    }
+}
+
+void loadCodes() {
+    codesCount = 0;
+    for (uint8_t i = 0; i < MAX_CODES; i++) {
+        EEPROM.get(EEPROM_ADDR_CODES + i * 4, codes[i]);
+        if (codes[i] != CODE_EMPTY) codesCount++;
+    }
+    // Seed fresh chip with the factory-calibrated code so out-of-the-box
+    // installs still work without a CODE_ADD from the operator.
+    if (codesCount == 0 && DEFAULT_CODE_OPEN != 0) {
+        codes[0] = DEFAULT_CODE_OPEN;
+        codesCount = 1;
+        saveCodes();
+    }
+}
+
+// ── Code-list operations ──────────────────────────────
+
+bool codeKnown(uint32_t c) {
+    for (uint8_t i = 0; i < MAX_CODES; i++) {
+        if (codes[i] == c) return true;
+    }
+    return false;
+}
+
+enum CodeAddResult { CODE_ADDED, CODE_EXISTS, CODE_FULL };
+
+CodeAddResult codeAddSlot(uint32_t c) {
+    if (codeKnown(c)) return CODE_EXISTS;
+    for (uint8_t i = 0; i < MAX_CODES; i++) {
+        if (codes[i] == CODE_EMPTY) {
+            codes[i] = c;
+            codesCount++;
+            saveCodes();
+            return CODE_ADDED;
+        }
+    }
+    return CODE_FULL;
+}
+
+bool codeRemove(uint32_t c) {
+    for (uint8_t i = 0; i < MAX_CODES; i++) {
+        if (codes[i] == c) {
+            codes[i] = CODE_EMPTY;
+            if (codesCount > 0) codesCount--;
+            saveCodes();
+            return true;
+        }
+    }
+    return false;
+}
+
+void codeClearAll() {
+    for (uint8_t i = 0; i < MAX_CODES; i++) codes[i] = CODE_EMPTY;
+    codesCount = 0;
+    saveCodes();
+}
+
+void sendCodeList() {
+    // 16 codes × 8 digits max + 15 commas + "Gate: CODES:" prefix < 180 bytes
+    char buf[192];
+    int off = snprintf(buf, sizeof(buf), "%s: CODES:", SENSOR_NAME);
+    if (codesCount == 0) {
+        snprintf(buf + off, sizeof(buf) - off, "NONE");
+    } else {
+        bool first = true;
+        for (uint8_t i = 0; i < MAX_CODES; i++) {
+            if (codes[i] == CODE_EMPTY) continue;
+            if (off >= (int)(sizeof(buf) - 12)) break;  // leave tail margin
+            off += snprintf(buf + off, sizeof(buf) - off, "%s%lu",
+                            first ? "" : ",", (unsigned long)codes[i]);
+            first = false;
+        }
+    }
+    sendMessage(buf);
+}
+
+// ── REBOOT via watchdog ───────────────────────────────
+
+static void doReboot() {
+    sendAck("REBOOT", "OK");
+    meshSerial.flush();
+    Serial.flush();
+    delay(100);                 // let UART bytes clear
+    wdt_enable(WDTO_15MS);
+    while (1) {}
+}
+
+// ── CMD parser ────────────────────────────────────────
+
 static bool targetMatches(const char* target) {
     if (strcasecmp(target, "ALL") == 0) return true;
     if (strcasecmp(target, SENSOR_NAME) == 0) return true;
@@ -67,41 +175,88 @@ static bool targetMatches(const char* target) {
 static void handleCommand(const char* target, const char* verb, const char* param) {
     if (!targetMatches(target)) return;
 
+    // STATUS: no ACK, the STATUS frame itself is the reply.
     if (strcasecmp(verb, "STATUS") == 0) {
         sendStatus();
         return;
     }
+
+    // Heartbeat control
     if (strcasecmp(verb, "HB_ON") == 0) {
         hbEnabled = true;
         EEPROM.update(EEPROM_ADDR_HB_EN, 1);
         lastStatus = millis();
-        sendHbAck("OK");
+        sendAck("HB", "OK");
         return;
     }
     if (strcasecmp(verb, "HB_OFF") == 0) {
         hbEnabled = false;
         EEPROM.update(EEPROM_ADDR_HB_EN, 0);
-        sendHbAck("OK");
+        sendAck("HB", "OK");
         return;
     }
     if (strcasecmp(verb, "HB_INTERVAL") == 0) {
-        if (param == NULL || *param == '\0') {
-            sendHbAck("ERROR");
-            return;
-        }
-        // atoi returns 0 on non-numeric; 0 is out of range anyway.
+        if (param == NULL || *param == '\0') { sendAck("HB", "ERROR"); return; }
         int m = atoi(param);
-        if (m < HB_MIN_MIN || m > HB_MIN_MAX) {
-            sendHbAck("ERROR");
-            return;
-        }
+        if (m < HB_MIN_MIN || m > HB_MIN_MAX) { sendAck("HB", "ERROR"); return; }
         hbIntervalMin = (uint8_t)m;
         EEPROM.update(EEPROM_ADDR_HB_MIN, hbIntervalMin);
-        lastStatus = millis();  // restart timer from now
-        sendHbAck("OK");
+        lastStatus = millis();
+        sendAck("HB", "OK");
         return;
     }
-    // Unknown verb — silent ignore (don't flood mesh with NACKs).
+
+    // System control
+    if (strcasecmp(verb, "REBOOT") == 0) {
+        doReboot();  // does not return
+        return;
+    }
+
+    // Gate-specific
+    if (strcasecmp(verb, "HITS_RESET") == 0) {
+        hitCount = 0;
+        saveHitCount();
+        sendAck("HITS_RESET", "OK");
+        return;
+    }
+    if (strcasecmp(verb, "DEBOUNCE_SET") == 0) {
+        if (param == NULL || *param == '\0') { sendAck("DEBOUNCE", "ERROR"); return; }
+        int s = atoi(param);
+        if (s < DEBOUNCE_MIN_SEC || s > DEBOUNCE_MAX_SEC) { sendAck("DEBOUNCE", "ERROR"); return; }
+        debounceSec = (uint8_t)s;
+        EEPROM.update(EEPROM_ADDR_DEBOUNCE, debounceSec);
+        sendAck("DEBOUNCE", "OK");
+        return;
+    }
+
+    // RF code registry
+    if (strcasecmp(verb, "CODE_ADD") == 0) {
+        if (param == NULL || *param == '\0') { sendAck("CODE", "ERROR"); return; }
+        unsigned long c = strtoul(param, NULL, 10);
+        if (c == 0UL || c > 0xFFFFFFUL) { sendAck("CODE", "ERROR"); return; }
+        switch (codeAddSlot((uint32_t)c)) {
+            case CODE_ADDED:  sendAck("CODE", "OK");     break;
+            case CODE_EXISTS: sendAck("CODE", "EXISTS"); break;
+            case CODE_FULL:   sendAck("CODE", "FULL");   break;
+        }
+        return;
+    }
+    if (strcasecmp(verb, "CODE_REMOVE") == 0) {
+        if (param == NULL || *param == '\0') { sendAck("CODE", "ERROR"); return; }
+        unsigned long c = strtoul(param, NULL, 10);
+        sendAck("CODE", codeRemove((uint32_t)c) ? "OK" : "NOT_FOUND");
+        return;
+    }
+    if (strcasecmp(verb, "CODE_LIST") == 0) {
+        sendCodeList();
+        return;
+    }
+    if (strcasecmp(verb, "CODE_CLEAR") == 0) {
+        codeClearAll();
+        sendAck("CODE", "OK");
+        return;
+    }
+    // Unknown verb — silent ignore.
 }
 
 // Parses "@<target> <verb>[:<param>[:...]]". Mutates line in place.
@@ -112,7 +267,7 @@ static void processCmdLine(char* line) {
     *space = '\0';
     const char* target = line + 1;
     char* rest = space + 1;
-    while (*rest == ' ') rest++;  // allow extra spaces
+    while (*rest == ' ') rest++;
 
     char* colon = strchr(rest, ':');
     const char* param = NULL;
@@ -125,7 +280,6 @@ static void processCmdLine(char* line) {
     handleCommand(target, verb, param);
 }
 
-// Drain meshSerial into cmdBuf, dispatch on newline.
 void pollCmd() {
     while (meshSerial.available()) {
         int c = meshSerial.read();
@@ -142,23 +296,28 @@ void pollCmd() {
         if (cmdLen < CMD_BUF_SIZE - 1) {
             cmdBuf[cmdLen++] = (char)c;
         } else {
-            // Overflow — discard the line so we don't misparse a truncation.
-            cmdLen = 0;
+            cmdLen = 0;  // overflow — discard to avoid misparsing a truncation
         }
     }
 }
 
+// ── setup / loop ──────────────────────────────────────
+
 void setup() {
+    // Optiboot leaves the WDT enabled with its last value after a watchdog
+    // reset, which would cause an immediate second reset if not cleared.
+    wdt_disable();
+
     Serial.begin(115200);
     meshSerial.begin(MESH_BAUD);
     rf.enableReceive(digitalPinToInterrupt(RF_PIN));
 
     EEPROM.get(EEPROM_ADDR_BOOTCOUNT, bootCount);
-    if (bootCount == 0xFFFF) bootCount = 0;  // fresh EEPROM reads as 0xFFFF
+    if (bootCount == 0xFFFF) bootCount = 0;
     bootCount++;
     EEPROM.put(EEPROM_ADDR_BOOTCOUNT, bootCount);
 
-    // Load heartbeat config. 0xFF == fresh/unwritten cell → fall back to default.
+    // Heartbeat config
     uint8_t hbEn  = EEPROM.read(EEPROM_ADDR_HB_EN);
     uint8_t hbMin = EEPROM.read(EEPROM_ADDR_HB_MIN);
     hbEnabled = (hbEn == 0xFF) ? true : (hbEn != 0);
@@ -167,6 +326,21 @@ void setup() {
     } else {
         hbIntervalMin = hbMin;
     }
+
+    // Debounce config
+    uint8_t dbs = EEPROM.read(EEPROM_ADDR_DEBOUNCE);
+    if (dbs == 0xFF || dbs < DEBOUNCE_MIN_SEC || dbs > DEBOUNCE_MAX_SEC) {
+        debounceSec = DEFAULT_DEBOUNCE_SEC;
+    } else {
+        debounceSec = dbs;
+    }
+
+    // Hit counter (fresh chip reads 0xFFFFFFFF → treat as 0)
+    EEPROM.get(EEPROM_ADDR_HITS, hitCount);
+    if (hitCount == 0xFFFFFFFFUL) hitCount = 0;
+
+    // Code registry
+    loadCodes();
 
     sendStatus();
     lastStatus = millis();
@@ -180,17 +354,16 @@ void loop() {
         unsigned long code = rf.getReceivedValue();
         rf.resetAvailable();
 
-        if (code != 0 && (now - lastRfEvent) > DEBOUNCE_MS) {
+        unsigned long debounceMs = (unsigned long)debounceSec * 1000UL;
+        if (code != 0 && (now - lastRfEvent) > debounceMs) {
             lastRfEvent = now;
 
-            if (code == CODE_OPEN) {
+            if (codeKnown((uint32_t)code)) {
                 hitCount++;
-                sendGateEvent("TRIGGERED");
-            } else if (code == CODE_CLOSED) {
-                hitCount++;
-                sendGateEvent("CLOSED");
+                saveHitCount();
+                sendEvent("TRIGGERED", (uint32_t)code);
             } else {
-                // Unknown code — log for debugging
+                // Unknown code — log on USB serial for `make learn-sensor`.
                 char buf[64];
                 snprintf(buf, sizeof(buf), "RF unknown: %lu", code);
                 Serial.println(buf);
@@ -198,7 +371,7 @@ void loop() {
         }
     }
 
-    // Inbound CMD handling (from Heltec GPIO48 -> R6 -> D4)
+    // Inbound CMD handling (Heltec GPIO48 → R6 → D4)
     pollCmd();
 
     // Periodic STATUS heartbeat (interval configurable via HB_INTERVAL)

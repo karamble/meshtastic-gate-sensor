@@ -2,10 +2,13 @@
 #define CONFIG_H
 
 // --- 433 MHz Sensor Codes ---
-// Run the learning sketch (Phase 2) to find your sensor's codes.
-// Replace these with the decimal values from rc-switch output.
-#define CODE_OPEN    150910  // KERUI D026 — transmits same code on open and close
-#define CODE_CLOSED  0       // disabled — sensor does not emit reliable close code
+// Codes are a runtime-mutable list (up to MAX_CODES entries) stored in
+// EEPROM and managed via CODE_ADD / CODE_REMOVE / CODE_LIST / CODE_CLEAR.
+// On a fresh chip (all EEPROM slots 0xFFFFFFFF), the firmware seeds the
+// list with DEFAULT_CODE_OPEN so out-of-the-box installs still detect the
+// factory-calibrated sensor without any CMDs.
+#define DEFAULT_CODE_OPEN 150910   // KERUI D026 open/close code (factory seed; 0 disables seeding)
+#define MAX_CODES         16       // number of code slots (each 4 B in EEPROM)
 
 // --- Sensor Identity ---
 // SENSOR_NAME is the instance prefix used in every outbound mesh frame
@@ -29,16 +32,23 @@
 // 30 min default keeps airtime low while still beating DigiNode CC's 16-min
 // NodeOnlineTimeout. The interval is runtime-configurable via HB_INTERVAL
 // (see CMD handlers in main.cpp) and persisted in EEPROM.
-#define DEFAULT_HB_MIN 30         // default heartbeat interval (minutes)
-#define HB_MIN_MIN     1          // minimum HB_INTERVAL value
-#define HB_MIN_MAX     60         // maximum HB_INTERVAL value
-#define DEBOUNCE_MS    10000      // 10s — absorb KERUI retransmit bursts, one event per opening
+#define DEFAULT_HB_MIN       30   // default heartbeat interval (minutes)
+#define HB_MIN_MIN            1   // minimum HB_INTERVAL value
+#define HB_MIN_MAX           60   // maximum HB_INTERVAL value
+#define DEFAULT_DEBOUNCE_SEC 10   // default RF debounce window (seconds)
+#define DEBOUNCE_MIN_SEC      1   // minimum DEBOUNCE_SET value
+#define DEBOUNCE_MAX_SEC     60   // maximum DEBOUNCE_SET value
 
 // --- EEPROM Layout ---
 // ATmega328P has 1 KB EEPROM. EEPROM reads as 0xFF when empty.
-#define EEPROM_ADDR_BOOTCOUNT 0   // uint16_t (2 bytes)
-#define EEPROM_ADDR_HB_EN     2   // uint8_t: 0=off, 1=on, 0xFF=default(on)
-#define EEPROM_ADDR_HB_MIN    3   // uint8_t: heartbeat interval in minutes
+#define EEPROM_ADDR_BOOTCOUNT 0    // uint16_t (2 B)
+#define EEPROM_ADDR_HB_EN     2    // uint8_t: 0=off, 1=on, 0xFF=default(on)
+#define EEPROM_ADDR_HB_MIN    3    // uint8_t: heartbeat interval in minutes
+#define EEPROM_ADDR_DEBOUNCE  4    // uint8_t: RF debounce seconds
+// 5 reserved
+#define EEPROM_ADDR_HITS      6    // uint32_t (4 B): cumulative hit counter, persisted
+// 10-11 reserved
+#define EEPROM_ADDR_CODES     12   // 16 × uint32_t (64 B): code list, 0xFFFFFFFF = empty slot
 
 // --- CMD line parser ---
 // CMDs arrive on SoftwareSerial RX (D4) from the Heltec's Meshtastic serial

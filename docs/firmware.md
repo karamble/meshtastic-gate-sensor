@@ -48,14 +48,14 @@ Edit `firmware/include/config.h` before building:
 
 ### Sensor Codes
 
+The firmware holds up to `MAX_CODES` (default 16) 433 MHz codes in a runtime-mutable list persisted in EEPROM. Codes are added, removed, listed, and cleared over the mesh via the `CODE_*` commands (see the [CMD Protocol](#cmd-protocol) section). An RF frame that matches **any** registered code fires `Gate: TRIGGERED:<code>`.
+
 ```c
-#define CODE_OPEN    150910  // KERUI D026 — transmits same code on open and close
-#define CODE_CLOSED  0       // disabled — sensor does not emit a distinct close code
+#define DEFAULT_CODE_OPEN 150910  // factory seed (KERUI D026); 0 disables auto-seeding
+#define MAX_CODES         16      // max distinct sensor codes
 ```
 
-`CODE_OPEN` ships pre-calibrated for the KERUI D026 used in this build. For any other 433 MHz sensor, discover its decimal code with `make learn-sensor` — the production firmware prints every decoded code to USB serial as `RF unknown: <decimal>`. Set `CODE_OPEN` to the repeating value and re-flash. See [learn-sensor.md](learn-sensor.md) for the full procedure.
-
-`CODE_CLOSED` stays at `0` (disabled) for the KERUI D026 because it emits the same code on open and close. If your sensor emits a distinct close code, set it here.
+On a fresh chip (all EEPROM code slots `0xFFFFFFFF`), the firmware seeds the list with `DEFAULT_CODE_OPEN` so an out-of-the-box install still detects the calibrated KERUI D026 without any CMDs. To learn a new sensor, use `make learn-sensor` (the production firmware prints every unrecognised code to USB serial as `RF unknown: <decimal>`) and then register the decimal via `@Gate CODE_ADD:<decimal>`.
 
 ### Sensor Identity
 
@@ -70,17 +70,23 @@ Edit `firmware/include/config.h` before building:
 |--------|---------|-------------|
 | `DEFAULT_HB_MIN` | 30 | Default heartbeat interval in minutes (compile-time fallback). The effective interval is runtime-configurable via the `HB_INTERVAL` command and persisted in EEPROM. |
 | `HB_MIN_MIN` / `HB_MIN_MAX` | 1 / 60 | Accepted range for `HB_INTERVAL`. Values outside the range are rejected with `HB_ACK:ERROR`. |
-| `DEBOUNCE_MS` | 10000 (10 s) | Minimum time between accepted RF events. Collapses the KERUI retransmit burst (4–10 copies per trigger) into one mesh event per physical opening. |
+| `DEFAULT_DEBOUNCE_SEC` | 10 | Default RF debounce window (seconds). Collapses the KERUI retransmit burst (4–10 copies per trigger) into one mesh event per physical opening. Runtime-configurable via `DEBOUNCE_SET:<seconds>` and persisted in EEPROM. |
+| `DEBOUNCE_MIN_SEC` / `DEBOUNCE_MAX_SEC` | 1 / 60 | Accepted range for `DEBOUNCE_SET`. Values outside the range are rejected with `DEBOUNCE_ACK:ERROR`. |
 
 ### EEPROM
 
-| Define | Addr | Size | Purpose |
-|--------|------|------|---------|
-| `EEPROM_ADDR_BOOTCOUNT` | 0 | 2 bytes (`uint16_t`) | Persistent boot counter, incremented once per `setup()` and reported in the STATUS frame's `Boot:` field. A fresh `0xFFFF` EEPROM reads as "never written" and resets to 0 before the first increment. |
-| `EEPROM_ADDR_HB_EN` | 2 | 1 byte (`uint8_t`) | Heartbeat enabled flag. `0xFF` (fresh chip) and `1` mean on; `0` means off. Mutated by `HB_ON` / `HB_OFF`. |
-| `EEPROM_ADDR_HB_MIN` | 3 | 1 byte (`uint8_t`) | Heartbeat interval in minutes. `0xFF` or any value outside `[HB_MIN_MIN, HB_MIN_MAX]` falls back to `DEFAULT_HB_MIN`. Mutated by `HB_INTERVAL:<min>`. |
+| Addr | Size | Purpose |
+|------|------|---------|
+| 0–1 | 2 B (`uint16_t`) | `bootCount` — incremented once per `setup()`. A fresh `0xFFFF` resets to 0. |
+| 2 | 1 B (`uint8_t`) | `hbEnabled` — `0xFF`/`1`=on, `0`=off. Mutated by `HB_ON`/`HB_OFF`. |
+| 3 | 1 B (`uint8_t`) | `hbIntervalMin` — heartbeat interval (minutes). `0xFF` or out-of-range → `DEFAULT_HB_MIN`. Mutated by `HB_INTERVAL`. |
+| 4 | 1 B (`uint8_t`) | `debounceSec` — RF debounce window (seconds). `0xFF` or out-of-range → `DEFAULT_DEBOUNCE_SEC`. Mutated by `DEBOUNCE_SET`. |
+| 5 | 1 B | reserved |
+| 6–9 | 4 B (`uint32_t`) | `hitCount` — persistent RF trigger counter. `0xFFFFFFFF` (fresh chip) treated as 0. Mutated on every TRIGGERED event and by `HITS_RESET`. |
+| 10–11 | 2 B | reserved |
+| 12–75 | 64 B | `codes[16]` × `uint32_t` — registered 433 MHz codes. `0xFFFFFFFF` = empty slot. Mutated by `CODE_ADD`/`CODE_REMOVE`/`CODE_CLEAR`. |
 
-Writes use `EEPROM.update` so unchanged values don't consume write cycles.
+Writes use `EEPROM.put`/`EEPROM.update` so unchanged bytes don't consume write cycles. At ATmega328P's 100k-write endurance and an expected write rate of ~10 triggers/day, the hit counter cell will outlast the rest of the hardware.
 
 ## Message Format
 
@@ -114,10 +120,10 @@ any backend changes.
 ### Gate Events
 
 ```
-Gate: TRIGGERED
+Gate: TRIGGERED:<decimal>
 ```
 
-A single event is emitted per physical trigger. The 10 s debounce collapses the KERUI retransmit burst into one mesh message. The sensor fires the same code on open and close, so there is no separate `OPEN` / `CLOSED` text. Event frames do not classify a node on their own — DigiNode CC relies on the node having already been classified via a prior STATUS broadcast.
+A single event is emitted per physical trigger. The debounce window (default 10 s, `DEBOUNCE_SET` configurable) collapses the KERUI retransmit burst into one mesh message. The `<decimal>` is the decoded 433 MHz code, enabling correlation against `CODE_LIST` to identify which physical sensor fired. Event frames do not classify a node on their own — DigiNode CC relies on the node having already been classified via a prior STATUS broadcast.
 
 ### Unknown RF Codes (debug output only, not sent to mesh)
 
@@ -153,23 +159,46 @@ The target-matching code assumes the Heltec's Meshtastic owner short-name is the
 | Verb | Params | ACK | Effect |
 |------|--------|-----|--------|
 | `STATUS` | none | *(none — the STATUS frame itself is the reply)* | Emits the STATUS heartbeat frame on demand. |
-| `HB_ON` | none | `Gate: HB_ACK:OK` | Enables periodic STATUS broadcasts. Persisted in EEPROM. |
-| `HB_OFF` | none | `Gate: HB_ACK:OK` | Suspends periodic STATUS broadcasts. Boot STATUS and `@… STATUS` queries still work. Persisted in EEPROM. |
-| `HB_INTERVAL` | `<minutes>` in `[1,60]` | `Gate: HB_ACK:OK` on valid, `Gate: HB_ACK:ERROR` on invalid | Changes the heartbeat interval. Resets the timer so the next STATUS fires `<minutes>` from the command, not from the previous heartbeat. Persisted in EEPROM. |
+| `HB_ON` | none | `Gate: HB_ACK:OK` | Enables periodic STATUS broadcasts. Persisted. |
+| `HB_OFF` | none | `Gate: HB_ACK:OK` | Suspends periodic STATUS broadcasts. Boot STATUS and `@… STATUS` queries still work. Persisted. |
+| `HB_INTERVAL` | `<minutes>` in `[1, 60]` | `Gate: HB_ACK:OK` or `HB_ACK:ERROR` | Changes the heartbeat interval and restarts the timer so the next STATUS fires `<minutes>` from the command. Persisted. |
+| `REBOOT` | none | `Gate: REBOOT_ACK:OK` (emitted before reset) | Watchdog-triggered reset. The Nano comes back in ~1 s and re-emits the boot STATUS with `Boot:` incremented. |
+| `HITS_RESET` | none | `Gate: HITS_RESET_ACK:OK` | Zeros the persistent hit counter. |
+| `DEBOUNCE_SET` | `<seconds>` in `[1, 60]` | `Gate: DEBOUNCE_ACK:OK` or `DEBOUNCE_ACK:ERROR` | Changes the RF event debounce window. Persisted. |
+| `CODE_ADD` | `<decimal>` in `[1, 16777215]` (24-bit) | `Gate: CODE_ACK:OK` / `CODE_ACK:EXISTS` / `CODE_ACK:FULL` / `CODE_ACK:ERROR` | Adds a 433 MHz code to the match list. Persisted. |
+| `CODE_REMOVE` | `<decimal>` | `Gate: CODE_ACK:OK` / `CODE_ACK:NOT_FOUND` / `CODE_ACK:ERROR` | Removes a code from the list. Persisted. |
+| `CODE_LIST` | none | `Gate: CODES:<code>,<code>,…` or `Gate: CODES:NONE` | Lists all registered codes as a single text frame (not a `CODE_ACK`). |
+| `CODE_CLEAR` | none | `Gate: CODE_ACK:OK` | Empties the entire code list. Persisted. |
 
 Unknown verbs are silently ignored (no NACK spam on the mesh).
+
+### TRIGGERED event format
+
+When a received RF code matches any registered entry, the firmware emits:
+
+```
+Gate: TRIGGERED:<decimal>
+```
+
+Example: `Gate: TRIGGERED:150910`. Downstream parsers can correlate the `<decimal>` against the list returned by `CODE_LIST` to identify which physical sensor fired.
 
 ### Examples
 
 ```
-@ALL STATUS                 → Gate: STATUS: …
-@Gate STATUS                → Gate: STATUS: …
-@Gate HB_OFF                → Gate: HB_ACK:OK
-@Gate HB_ON                 → Gate: HB_ACK:OK
-@Gate HB_INTERVAL:5         → Gate: HB_ACK:OK   (next STATUS in 5 min)
-@Gate HB_INTERVAL:0         → Gate: HB_ACK:ERROR
-@Gate HB_INTERVAL:99        → Gate: HB_ACK:ERROR
-@Other STATUS               → (ignored)
+@ALL STATUS                    → Gate: STATUS: …
+@Gate STATUS                   → Gate: STATUS: …
+@Gate HB_OFF                   → Gate: HB_ACK:OK
+@Gate HB_INTERVAL:5            → Gate: HB_ACK:OK
+@Gate REBOOT                   → Gate: REBOOT_ACK:OK (then the Nano resets)
+@Gate HITS_RESET               → Gate: HITS_RESET_ACK:OK
+@Gate DEBOUNCE_SET:5           → Gate: DEBOUNCE_ACK:OK
+@Gate CODE_LIST                → Gate: CODES:150910
+@Gate CODE_ADD:4444222         → Gate: CODE_ACK:OK
+@Gate CODE_ADD:150910          → Gate: CODE_ACK:EXISTS
+@Gate CODE_REMOVE:4444222      → Gate: CODE_ACK:OK
+@Gate CODE_REMOVE:404          → Gate: CODE_ACK:NOT_FOUND
+@Gate CODE_CLEAR               → Gate: CODE_ACK:OK
+@Other STATUS                  → (ignored)
 ```
 
 ## Firmware Logic
