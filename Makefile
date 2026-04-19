@@ -21,6 +21,8 @@ help:
 	@echo "    make pcb-upgrade   Upgrade PCB to KiCad 10 format"
 	@echo "    make assembly      Generate assembly PCB with 3D models"
 	@echo "    make assembly-step Export 3D STEP file (requires AppImage)"
+	@echo "    make open          Open bare PCB in KiCad (AppImage)"
+	@echo "    make open-assembly Open assembly PCB in KiCad (AppImage)"
 	@echo "    make kicad-version Show KiCad Docker version"
 	@echo ""
 	@echo "  Firmware (PlatformIO):"
@@ -32,7 +34,7 @@ help:
 
 # --- KiCad targets ---
 
-.PHONY: kicad-version drc gerbers drill svg pdf pcb-stats pcb-upgrade assembly assembly-step
+.PHONY: kicad-version drc gerbers drill svg pdf pcb-stats pcb-upgrade assembly assembly-step open open-assembly
 
 kicad-version:
 	$(KICAD_RUN) version
@@ -88,6 +90,21 @@ extract-3dmodels:
 	done; \
 	kill $$MOUNT_PID 2>/dev/null; \
 	echo "3D models extracted to $(MODELS_DIR)"
+
+# --- Open PCB in KiCad GUI (AppImage) ---
+#
+# The KiCad 10 AppImage dispatches on its first argv — the subcommand name
+# (pcbnew, kicad, eeschema, kicad-cli, ...). Pass absolute paths since the
+# AppImage remaps its working directory.
+
+open:
+	@test -f $(APPIMAGE) || { echo "KiCad AppImage not found at $(APPIMAGE)"; exit 1; }
+	@test -f pcb/gate_sensor_v2.kicad_pcb || { echo "Run 'python3 pcb/gate_sensor_pcb_v2.py' first."; exit 1; }
+	$(APPIMAGE) pcbnew $(CURDIR)/pcb/gate_sensor_v2.kicad_pcb &
+
+open-assembly: assembly
+	@test -f $(APPIMAGE) || { echo "KiCad AppImage not found at $(APPIMAGE)"; exit 1; }
+	$(APPIMAGE) pcbnew $(CURDIR)/$(ASSEMBLY_PCB) &
 
 assembly-step: assembly
 	@mkdir -p pcb/output

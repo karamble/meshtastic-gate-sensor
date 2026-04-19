@@ -4,27 +4,28 @@
 ## Architecture
 
 ```
-  KERUI D026          RXB6 433MHz        Arduino Nano         Heltec LoRa32 V3
-  door sensor         receiver           (ATmega328P)         (Meshtastic)
-  +-----------+       +----------+       +--------------+     +----------------+
-  | 433 MHz   |~~~~~> | DATA  ---|------>| D2 (INT0)    |     |                |
-  | open/close|       | DE <-R5- |--+    |              |     |                |
-  +-----------+       | VDD      |  |    | D3 (TX)  ----|--+  |                |
-                      | GND      |  |    |              |  |  |                |
-                      +----------+  |    |         5V --|--|--|- 5V            |
-                                    |    |        GND --|--|--|- GND           |
-                                    |    +--------------+  |  |                |
-                                    |                      |  |                |
-                                    |    Logic Level Div   |  |                |
-                                    |    +------------+    |  |                |
-                                    |    | R1 2.2k    |<---+  |                |
-                                    |    |   +--jct---|------->| GPIO47 (RX)   |
-                                    |    | R2 3.3k    |       |                |
-                                    |    |   +--GND   |       |                |
-                                    |    +------------+       +----------------+
+  KERUI D026          RXB6 433MHz        Arduino Nano           Heltec LoRa32 V3
+  door sensor         receiver           (ATmega328P)           (Meshtastic)
+  +-----------+       +----------+       +----------------+     +----------------+
+  | 433 MHz   |~~~~~> | DATA  ---|------>| D2 (INT0)      |     |                |
+  | open/close|       | DE <-R5- |--+    |                |     |                |
+  +-----------+       | VDD      |  |    | D3 (TX)  ------|--+  |                |
+                      | GND      |  |    |                |  |  |                |
+                      +----------+  |    | D4 (RX) <-R6---|--|--|- GPIO48 (TX)   |
+                                    |    |           5V --|--|--|- 5V            |
+                                    |    |          GND --|--|--|- GND           |
+                                    |    +----------------+  |  |                |
+                                    |                        |  |                |
+                                    |    Logic Level Div     |  |                |
+                                    |    +------------+      |  |                |
+                                    |    | R1 2.2k    |<-----+  |                |
+                                    |    |   +--jct---|-------->| GPIO47 (RX)   |
+                                    |    | R2 3.3k    |         |                |
+                                    |    |   +--GND   |         |                |
+                                    |    +------------+         +----------------+
                                     |
   Waveshare Solar     J4 (switch)   |
-  Power Mgr D         +-----+      |
+  Power Mgr D         +-----+       |
   +-----------+  J2   |IN|OUT|------+----> 5V bus
   | 5V OUT  --|------->  |   |
   | GND     --|------>| GND bus
@@ -39,9 +40,11 @@
 | 5V | Main power bus | Heltec L2; Nano R12 (5V pin); RXB6 pins 4,5 (VDD); R5 pad1; C1 pad1; C2 pad1; J4 pin2 (switch out) |
 | 5V_IN | Unswitched input | J2 pin1 (Waveshare 5V); J4 pin1 (switch in) |
 | 3V3 | 3.3V (Heltec only) | Heltec R2, R3 (bridged, not distributed) |
-| D3 | SoftwareSerial TX | Nano L6 (D3); R1 pad1 |
-| D2 | RF DATA | Nano L5 (D2/INT0); RXB6 pin 7 (DATA) |
+| D3 | SoftwareSerial TX | Nano R10 (D3); R1 pad1 |
+| D2 | RF DATA | Nano R11 (D2/INT0); RXB6 pin 7 (DATA) |
+| D4 | SoftwareSerial RX | Nano R9 (D4); R6 pad2 |
 | HELTEC_RX | Level-shifted serial | R1 pad2; R2 pad1; Heltec L13 (GPIO47) |
+| HELTEC_TX | Heltec serial TX | Heltec L14 (GPIO48); R6 pad1 |
 | DE | RXB6 data enable | RXB6 pin 6 (DE); R5 pad2 |
 
 **Note on D2 net:** This signal connects to physical pin D2 (L5), which provides INT0 for RCSwitch interrupt-driven reception. The firmware uses `RF_PIN 2` (D2).
@@ -60,7 +63,8 @@ Left row (L1-L18), top to bottom (USB end to antenna end):
 | L4 | Ve | -- | |
 | L5-L12 | GPIO44,TX43,RST,... | -- | Unused |
 | L13 | GPIO47 | HELTEC_RX | **Serial RX** (Meshtastic serial module) |
-| L14-L18 | 48,26,21,20,19 | -- | Unused |
+| L14 | GPIO48 | HELTEC_TX | **Serial TX** (Meshtastic serial module) → R6 → Nano D4 |
+| L15-L18 | 26,21,20,19 | -- | Unused |
 
 Right row (R1-R18):
 
@@ -149,5 +153,6 @@ All modules are powered from the switched 5V bus. The Nano is powered via its 5V
 | Ref | Value | Purpose | Placement |
 |-----|-------|---------|-----------|
 | R5 | 10k | DE pull-up to 5V | Between V5 bus and RXB6 pin 6 (DE). Keeps data enable active. |
+| R6 | 4.7k | Series resistor on Heltec TX → Nano RX | Between Heltec GPIO48 and Nano D4. Limits back-feed current through Nano ESD clamp diode when Heltec is USB-powered alone (Nano Vcc=0). |
 | C1 | 100nF ceramic | Bypass capacitor | Near RXB6 VDD (pin 4). Filters high-frequency noise on power supply. |
 | C2 | 100uF electrolytic | Bulk capacitor | On V5/GND bus near J4 switch. Smooths inrush current and voltage dips. |

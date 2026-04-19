@@ -28,7 +28,7 @@ firmware/
 | Library | Version | Purpose |
 |---------|---------|---------|
 | rc-switch | ^2.6.4 | 433MHz RF protocol decoding. Uses hardware interrupt INT0 on pin D2. |
-| SoftwareSerial | built-in | UART TX on D3 to Heltec (9600 baud). RX pin defined but unused. |
+| SoftwareSerial | built-in | UART TX on D3 to Heltec (9600 baud) via R1/R2 divider; RX on D4 from Heltec GPIO48 via R6 series resistor. |
 
 ## Pin Configuration
 
@@ -38,7 +38,7 @@ Defined in `firmware/include/config.h`:
 |--------|-------|----------|
 | `RF_PIN` | 2 | RXB6 DATA input. D2 = INT0 (required by RCSwitch `enableReceive`). |
 | `SERIAL_TX` | 3 | SoftwareSerial TX to Heltec GPIO47 via level divider. |
-| `SERIAL_RX` | 4 | SoftwareSerial RX (unused, placeholder — Heltec TX not connected). |
+| `SERIAL_RX` | 4 | SoftwareSerial RX ← R6 (4.7k) ← Heltec GPIO48 (Meshtastic serial TX). |
 
 **Note on GPIO47:** The Heltec V3 Meshtastic serial module must be configured to use GPIO47 as its RX pin. GPIO44 is shared with the CP2102 USB-UART and causes conflicts.
 

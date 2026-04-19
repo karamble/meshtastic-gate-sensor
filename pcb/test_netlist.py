@@ -210,7 +210,9 @@ def main():
         "3V3": {"U3-R2", "U3-R3"},
         "D3": {"U1-R10", "R1-1"},
         "D2": {"U1-R11", "U2-7"},
+        "D4": {"U1-R9", "R6-2"},
         "HELTEC_RX": {"R1-2", "R2-1", "U3-L13"},
+        "HELTEC_TX": {"U3-L14", "R6-1"},
         "DE": {"R5-2", "U2-6"},
     }
 
@@ -268,10 +270,10 @@ def main():
               serial_tx == 3 and "R1-1" in net_pads.get("D3", set()),
               f"SERIAL_TX={serial_tx}, D3 net={net_pads.get('D3', set())}")
 
-        # SERIAL_RX=4 → D4 should have no net (unused)
-        check(f"SERIAL_RX={serial_rx} (D4) is unused",
-              serial_rx == 4 and "U1-R9" not in pad_net,
-              f"SERIAL_RX={serial_rx}, U1-R9 net={pad_net.get('U1-R9', 'none')}")
+        # SERIAL_RX=4 → D4 net connects U1-R9 through R6 to Heltec GPIO48
+        check(f"SERIAL_RX={serial_rx} (D4) → R6 series resistor",
+              serial_rx == 4 and "R6-2" in net_pads.get("D4", set()),
+              f"SERIAL_RX={serial_rx}, D4 net={net_pads.get('D4', set())}")
 
         # Baud rate
         mesh_baud = defines.get("MESH_BAUD")
@@ -338,6 +340,14 @@ def main():
           "U3-L13" in net_pads.get("HELTEC_RX", set()),
           f"HELTEC_RX pads: {net_pads.get('HELTEC_RX', set())}")
 
+    # HELTEC_TX reaches Heltec GPIO48 through R6 series resistor
+    check("HELTEC_TX net reaches Heltec L14 (GPIO48)",
+          "U3-L14" in net_pads.get("HELTEC_TX", set()),
+          f"HELTEC_TX pads: {net_pads.get('HELTEC_TX', set())}")
+    check("R6 pad1 on HELTEC_TX, pad2 on D4 (series)",
+          pad_net.get("R6-1") == "HELTEC_TX" and pad_net.get("R6-2") == "D4",
+          f"R6-1={pad_net.get('R6-1')}, R6-2={pad_net.get('R6-2')}")
+
     # Voltage calculation: Vout = 5 * R2 / (R1 + R2)
     R1_VAL = 2.2  # kΩ
     R2_VAL = 3.3  # kΩ
@@ -359,7 +369,7 @@ def main():
         net_vias = [v for v in vias if v["net"] == nid]
         return len(net_traces), len(net_vias)
 
-    for net_name in ["D3", "D2", "HELTEC_RX", "DE", "GND", "5V", "5V_IN"]:
+    for net_name in ["D3", "D2", "D4", "HELTEC_RX", "HELTEC_TX", "DE", "GND", "5V", "5V_IN"]:
         t_count, v_count = check_net_traces(net_name)
         check(f"Net '{net_name}' has traces ({t_count} segments, {v_count} vias)",
               t_count > 0,

@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 """
-Gate Sensor Carrier PCB v2.2 — KiCad S-expression generator
+Gate Sensor Carrier PCB v2.4 — KiCad S-expression generator
 Writes gate_sensor_v2.kicad_pcb directly — NO pcbnew / SWIG dependency.
 Compatible with KiCad 7–10.  Runs inside or outside KiCad.
+
+v2.4 changes (bidirectional UART):
+  - Added Heltec GPIO48 (L14) -> R6 (4k7) -> Nano D4 (R9) RX path
+  - New nets: HELTEC_TX, D4
+  - R6 series resistor protects Nano from back-feed when Heltec is
+    USB-powered alone (flashing) while 5V rail is off
 
 v2.2 changes (compact layout):
   - Board shrunk from 90x75mm to 75x66mm
@@ -38,8 +44,8 @@ def _build():
         if name not in _nets: _nid[0] += 1; _nets[name] = _nid[0]
         return name
     GND = N("GND"); V5 = N("5V"); V5_IN = N("5V_IN"); V33 = N("3V3")
-    D3_NET = N("D3"); D2_NET = N("D2")
-    HLTC_RX = N("HELTEC_RX"); DE_NET = N("DE")
+    D3_NET = N("D3"); D2_NET = N("D2"); D4_NET = N("D4")
+    HLTC_RX = N("HELTEC_RX"); HLTC_TX = N("HELTEC_TX"); DE_NET = N("DE")
 
     _body = []
     def emit(s): _body.append(s)
@@ -150,8 +156,9 @@ def _build():
 
     # Left row: 18 pins, top (USB end) to bottom (antenna end)
     # GPIO47 (L13) used for Meshtastic serial RX — avoids GPIO44/CP2102 conflict
+    # GPIO48 (L14) used for Meshtastic serial TX -> R6 (4k7) -> Nano D4
     HL_NETS = [GND, V5, None, None, None, None, None, None,
-               None, None, None, None, HLTC_RX, None, None, None, None, None]
+               None, None, None, None, HLTC_RX, HLTC_TX, None, None, None, None]
     HL_LBLS = ["GND","5V","Ve","Ve","44","TX43","RST","C",
                "36","35","34","33","47/RX","48","26","21","20","19"]
     # Right row: 18 pins
@@ -201,8 +208,9 @@ def _build():
                "A4","A5","A6","A7","5V","RST","GND","VIN"]
     # RIGHT side — digital (D12 at USB end, D1/TX at bottom)
     # D2 (R11) = RXB6 DATA (INT0 for RCSwitch), D3 (R10) = SoftwareSerial TX
+    # D4 (R9)  = SoftwareSerial RX <- R6 (4k7) <- Heltec GPIO48
     NR_NETS = [None, None, None, None, None, None, None,
-               None, None, D3_NET, D2_NET, GND, None, None, None]
+               None, D4_NET, D3_NET, D2_NET, GND, None, None, None]
     NR_LBLS = ["D12","D11","D10","D9","D8","D7","D6",
                "D5","D4","D3","D2","GND","RST","D1","D0"]
 
@@ -313,6 +321,20 @@ def _build():
     txt("R5 10k", (R5_X1+R5_X2)/2, R5_Y - 3.0)
     txt("DE pullup", (R5_X1+R5_X2)/2, R5_Y + 2.5, layer="F.Fab")
 
+    # R6 (4.7k) — series resistor on Heltec GPIO48 -> Nano D4 path
+    # Protects Nano from back-feed when Heltec is USB-powered alone
+    # (~0.57 mA max through Nano ESD clamp diode if Nano Vcc=0)
+    # Placed in top margin, horizontal, between Heltec and Nano columns
+    # Y=8.7 keeps 0.575mm clearance from USB-C notch edge at Y=8 (>0.5mm rule)
+    R6_X1, R6_X2, R6_Y = 48.0, 48.0 + 5.08, 8.7
+    r6 = new_fp("R6", "4.7k", (R6_X1+R6_X2)/2, R6_Y)
+    r6.pad("1", R6_X1, R6_Y, 0.8, 1.6, HLTC_TX, True)
+    r6.pad("2", R6_X2, R6_Y, 0.8, 1.6, D4_NET)
+    fab_box(R6_X1 - 1.2, R6_Y - 1.4, R6_X2 + 1.2, R6_Y + 1.4)
+    # Silk reference above R6 body (title subtitle removed to free this space)
+    txt("R6 4k7", (R6_X1+R6_X2)/2, R6_Y - 2.5)
+    txt("GPIO48 series", (R6_X1+R6_X2)/2, R6_Y + 2.5, layer="F.Fab")
+
     # C1 (100nF) — bypass cap near RXB6 VDD (pin 4)
     # Placed left of RXB6, vertical, between V5 and GND
     # C1 placed horizontally to avoid V5/GND trace crossing
@@ -355,17 +377,16 @@ def _build():
     silk(J4_X0 - .5, J4_Y - 3.8, J4_X0 + .5, J4_Y - 4.6)
     silk(J4_X0 + 2.5, J4_Y - 3.8, J4_X0 + 1.5, J4_Y - 4.6)
     txt("PWR SW", J4_X0 + 1.0, J4_Y - 5.5)
-    txt("IN  OUT", J4_X0 + 1.0, J4_Y + 3.5)
+    txt("Switch", J4_X0 + 1.0, J4_Y + 3.5)
 
     # ══════════════════════════════════════════════════════
     #  SILKSCREEN — Title & notes
     # ══════════════════════════════════════════════════════
-    txt("GATE SENSOR CARRIER v2.3", 42, 4.0, size=1.1)
-    txt("75x66mm  2L  1.6mm  HASL", 42, 6.0)
+    txt("GATE SENSOR CARRIER v2.4", 42, 4.0, size=1.1)
 
     # Verbose circuit notes on F.Fab (not silk)
     note_x = (HLTC_XR + NANO_XL) / 2
-    txt("LOGIC LEVEL: D3->R1(2k2)->R2(3k3)->GND, jct->GPIO47",
+    txt("LOGIC LEVEL: D3->R1(2k2)->R2(3k3)->GND, jct->GPIO47; GPIO48->R6(4k7)->D4",
         note_x - 10, R1_DIV_Y - 5, layer="F.Fab")
     txt("All boards removable except U2 (RXB6 direct solder)",
         5, BH - 2.0, layer="F.Fab")
@@ -380,10 +401,10 @@ def _build():
         for x1, y1, x2, y2 in logo["lines"]:
             silk(x1 + LOGO_DX, y1, x2 + LOGO_DX, y2, logo["line_width"])
 
-    # Text beside logo (0.7mm to fit without overlapping nearby labels)
-    txt("GoTailMe.com", 54.0, 59.5, size=0.7)
-    txt("Meshtastic Gate", 54.0, 60.7, size=0.7)
-    txt("and Door Sensor", 54.0, 61.9, size=0.7)
+    # Text beside logo (1.0mm, 1.3mm line spacing)
+    txt("GoTailMe.com", 54.0, 59.0, size=1.0)
+    txt("Meshtastic Gate", 54.0, 60.3, size=1.0)
+    txt("and Door Sensor", 54.0, 61.6, size=1.0)
 
     # ══════════════════════════════════════════════════════
     #  ROUTING
@@ -509,6 +530,35 @@ def _build():
     trk(D3_DROP_X, D3_JOG_Y, R1_X1, D3_JOG_Y, D3_NET, "F.Cu", S)
     trk(R1_X1, D3_JOG_Y, R1_X1, R1_Y, D3_NET, "F.Cu", S)
 
+    # ── HELTEC_TX (Heltec L14 / GPIO48 → R6 pad1) ────────
+    # L14 at (7.0, 43.02). F.Cu at L14 would collide with HELTEC_RX
+    # (Y=24.7/39.21); B.Cu horizontal at Y=44.29 would short the GND B.Cu
+    # drop at X=32.5. Hybrid: F.Cu horizontal east through R14/R15 gap
+    # to X=34 (past GND drop), via to B.Cu for vertical up (clean corridor,
+    # 1.5mm from GND B.Cu drop, 4mm from R2 GND drop), via back to F.Cu
+    # at the top margin, then east to R6 pad1.
+    HLTC_TX_Y   = HLTC_Y0 + 13*P               # 43.02 (L14)
+    HLTC_TX_GAP = (HLTC_Y0 + 13*P + HLTC_Y0 + 14*P) / 2  # 44.29 (R14/R15 gap)
+    HLTC_TX_COR = 34.0                          # vertical corridor X (clear of GND drops)
+    TOP_MARGIN_Y = 8.7                          # horizontal run Y (0.7mm below notch)
+    trk(HLTC_XL, HLTC_TX_Y, HLTC_XL, HLTC_TX_GAP, HLTC_TX, "F.Cu", S)
+    trk(HLTC_XL, HLTC_TX_GAP, HLTC_TX_COR, HLTC_TX_GAP, HLTC_TX, "F.Cu", S)
+    via_hole(HLTC_TX_COR, HLTC_TX_GAP, HLTC_TX)
+    trk(HLTC_TX_COR, HLTC_TX_GAP, HLTC_TX_COR, TOP_MARGIN_Y, HLTC_TX, "B.Cu", S)
+    via_hole(HLTC_TX_COR, TOP_MARGIN_Y, HLTC_TX)
+    trk(HLTC_TX_COR, TOP_MARGIN_Y, R6_X1, TOP_MARGIN_Y, HLTC_TX, "F.Cu", S)
+
+    # ── D4 (R6 pad2 → Nano R9 / D4) ──────────────────────
+    # R6 pad2 at (53.08, 8.7). Nano R9 (D4) at (70.24, 32.32).
+    # F.Cu right to X=73, via to B.Cu (D3 occupies X=73 on F.Cu Y=10-34.86),
+    # B.Cu down the right edge to D4 pad.
+    D4_RIGHT_X = 73.0
+    D4_NANO_Y  = NANO_Y0 + 8*P     # 32.32 (R9)
+    trk(R6_X2, TOP_MARGIN_Y, D4_RIGHT_X, TOP_MARGIN_Y, D4_NET, "F.Cu", S)
+    via_hole(D4_RIGHT_X, TOP_MARGIN_Y, D4_NET)
+    trk(D4_RIGHT_X, TOP_MARGIN_Y, D4_RIGHT_X, D4_NANO_Y, D4_NET, "B.Cu", S)
+    trk(D4_RIGHT_X, D4_NANO_Y, NANO_XR, D4_NANO_Y, D4_NET, "B.Cu", S)
+
     # ── D2/RF Signal (Nano D2/R11 → RXB6 DATA pin 7) ────────
     # D2 is INT0, required for RCSwitch. R11 = NANO_Y0 + 10*P = 37.40
     # All F.Cu: right to board edge, down to RXB6 DATA Y, left to pin
@@ -610,17 +660,15 @@ def _build():
     with open(out_path, "w", encoding="utf-8") as fh:
         fh.write(doc)
     print(f"""
-Gate Sensor Carrier PCB v2.2  —  generated OK
+Gate Sensor Carrier PCB v2.4  —  generated OK
 Output : {out_path}
 Board  : {BW} x {BH} mm  2-layer  1.6 mm  HASL
 Nets   : {len(_nets)-1} named
 
-v2.2 changes:
-  - Board shrunk from 90x75mm to 75x66mm
-  - R3/R4 moved below Nano (X≈60, Y≈50)
-  - Connectors J2/J3/J4 moved up to Y=62
-  - V5/GND buses at Y=55/57
-  - All routing updated for compact layout
+v2.4 changes (bidirectional UART):
+  - Heltec GPIO48 (L14) -> R6 (4k7) -> Nano D4 (R9) RX path
+  - R6 protects Nano from back-feed when Heltec is USB-powered alone
+  - Top-margin route: F.Cu along Y=8.5, B.Cu right-edge drop to D4
 
 Includes:
   - GND copper pour on F.Cu and B.Cu (0.3mm clearance, thermal relief)
