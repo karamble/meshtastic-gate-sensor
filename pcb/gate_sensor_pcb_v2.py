@@ -397,14 +397,22 @@ def _build():
     if os.path.exists(logo_path):
         with open(logo_path) as lf:
             logo = json.load(lf)
-        LOGO_DX = 6.0  # shift logo right to clear J4 pad2
+        # Scaled 1.2x anchored at the logo's top-left so the top edge stays
+        # where it was and the extra space below the logo is used. Horizontal
+        # LOGO_DX=6 keeps the left edge past J4 pad2.
+        LOGO_DX, LOGO_SCALE = 6.0, 1.2
+        LOGO_X0, LOGO_Y0 = 36.8, 58.1  # logo-coord top-left (anchor)
         for x1, y1, x2, y2 in logo["lines"]:
-            silk(x1 + LOGO_DX, y1, x2 + LOGO_DX, y2, logo["line_width"])
+            sx1 = (x1 - LOGO_X0) * LOGO_SCALE + LOGO_X0 + LOGO_DX
+            sy1 = (y1 - LOGO_Y0) * LOGO_SCALE + LOGO_Y0
+            sx2 = (x2 - LOGO_X0) * LOGO_SCALE + LOGO_X0 + LOGO_DX
+            sy2 = (y2 - LOGO_Y0) * LOGO_SCALE + LOGO_Y0
+            silk(sx1, sy1, sx2, sy2, logo["line_width"])
 
-    # Text beside logo (1.0mm, 1.3mm line spacing)
-    txt("GoTailMe.com", 54.0, 59.0, size=1.0)
-    txt("Meshtastic Gate", 54.0, 60.3, size=1.0)
-    txt("and Door Sensor", 54.0, 61.6, size=1.0)
+    # Text shifted right to X=56 to give the larger logo breathing room
+    txt("GoTailMe.com", 56.0, 59.0, size=1.0)
+    txt("Meshtastic Gate", 56.0, 60.3, size=1.0)
+    txt("and Door Sensor", 56.0, 61.6, size=1.0)
 
     # ══════════════════════════════════════════════════════
     #  ROUTING
