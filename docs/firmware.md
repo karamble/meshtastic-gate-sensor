@@ -68,7 +68,8 @@ Edit `firmware/include/config.h` before building:
 
 | Define | Default | Description |
 |--------|---------|-------------|
-| `STATUS_MS` | 1800000 (30 min) | Interval between STATUS heartbeat frames. One STATUS is also emitted on every boot. |
+| `DEFAULT_HB_MIN` | 30 | Default heartbeat interval in minutes (compile-time fallback). The effective interval is runtime-configurable via the `HB_INTERVAL` command and persisted in EEPROM. |
+| `HB_MIN_MIN` / `HB_MIN_MAX` | 1 / 60 | Accepted range for `HB_INTERVAL`. Values outside the range are rejected with `HB_ACK:ERROR`. |
 | `DEBOUNCE_MS` | 10000 (10 s) | Minimum time between accepted RF events. Collapses the KERUI retransmit burst (4–10 copies per trigger) into one mesh event per physical opening. |
 
 ### EEPROM
@@ -76,6 +77,10 @@ Edit `firmware/include/config.h` before building:
 | Define | Addr | Size | Purpose |
 |--------|------|------|---------|
 | `EEPROM_ADDR_BOOTCOUNT` | 0 | 2 bytes (`uint16_t`) | Persistent boot counter, incremented once per `setup()` and reported in the STATUS frame's `Boot:` field. A fresh `0xFFFF` EEPROM reads as "never written" and resets to 0 before the first increment. |
+| `EEPROM_ADDR_HB_EN` | 2 | 1 byte (`uint8_t`) | Heartbeat enabled flag. `0xFF` (fresh chip) and `1` mean on; `0` means off. Mutated by `HB_ON` / `HB_OFF`. |
+| `EEPROM_ADDR_HB_MIN` | 3 | 1 byte (`uint8_t`) | Heartbeat interval in minutes. `0xFF` or any value outside `[HB_MIN_MIN, HB_MIN_MAX]` falls back to `DEFAULT_HB_MIN`. Mutated by `HB_INTERVAL:<min>`. |
+
+Writes use `EEPROM.update` so unchanged values don't consume write cycles.
 
 ## Message Format
 
@@ -122,6 +127,51 @@ RF unknown: 1234567
 
 Printed to the Nano's USB serial (115200 baud) only, not forwarded to Meshtastic. Used by `make learn-sensor` to discover the decimal code for a new sensor.
 
+## CMD Protocol
+
+The Nano listens for command frames on its SoftwareSerial RX pin (D4, fed by Heltec GPIO48 through R6). Commands are plain text forwarded by the Heltec's Meshtastic serial module in `TEXTMSG` mode.
+
+### Wire format
+
+```
+@<target> <verb>[:<param1>[:<param2>...]]\n
+```
+
+- `<target>` — `ALL` for broadcast, or the sensor's identity. Matched case-insensitively against `SENSOR_NAME` (default `"Gate"`), so `@Gate`, `@GATE`, and `@gate` all hit.
+- `<verb>` — uppercase command name.
+- `<params>` — colon-delimited.
+- Terminated by `\n` (TEXTMSG preserves the payload's line framing).
+
+Frames that don't begin with `@` are ignored. Frames whose target doesn't match `ALL` or `SENSOR_NAME` are ignored — the sensor will not respond on another node's behalf.
+
+### Identity invariant
+
+The target-matching code assumes the Heltec's Meshtastic owner short-name is the same string as the Nano's `SENSOR_NAME`. This is set by `scripts/flash-heltec-meshtastic.sh` (`--set-owner-short "GATE"`) and must be kept in sync if `SENSOR_NAME` ever changes. TEXTMSG mode strips envelope metadata, so the Nano cannot discover the Heltec's short-name at runtime.
+
+### Commands
+
+| Verb | Params | ACK | Effect |
+|------|--------|-----|--------|
+| `STATUS` | none | *(none — the STATUS frame itself is the reply)* | Emits the STATUS heartbeat frame on demand. |
+| `HB_ON` | none | `Gate: HB_ACK:OK` | Enables periodic STATUS broadcasts. Persisted in EEPROM. |
+| `HB_OFF` | none | `Gate: HB_ACK:OK` | Suspends periodic STATUS broadcasts. Boot STATUS and `@… STATUS` queries still work. Persisted in EEPROM. |
+| `HB_INTERVAL` | `<minutes>` in `[1,60]` | `Gate: HB_ACK:OK` on valid, `Gate: HB_ACK:ERROR` on invalid | Changes the heartbeat interval. Resets the timer so the next STATUS fires `<minutes>` from the command, not from the previous heartbeat. Persisted in EEPROM. |
+
+Unknown verbs are silently ignored (no NACK spam on the mesh).
+
+### Examples
+
+```
+@ALL STATUS                 → Gate: STATUS: …
+@Gate STATUS                → Gate: STATUS: …
+@Gate HB_OFF                → Gate: HB_ACK:OK
+@Gate HB_ON                 → Gate: HB_ACK:OK
+@Gate HB_INTERVAL:5         → Gate: HB_ACK:OK   (next STATUS in 5 min)
+@Gate HB_INTERVAL:0         → Gate: HB_ACK:ERROR
+@Gate HB_INTERVAL:99        → Gate: HB_ACK:ERROR
+@Other STATUS               → (ignored)
+```
+
 ## Firmware Logic
 
 ### setup()
@@ -130,12 +180,14 @@ Printed to the Nano's USB serial (115200 baud) only, not forwarded to Meshtastic
 2. Initialize SoftwareSerial at 9600 baud (Meshtastic)
 3. Enable RCSwitch interrupt receiver on D2 (INT0)
 4. Read `bootCount` from EEPROM, increment, write back
-5. Send the first STATUS frame
+5. Load `hbEnabled` and `hbIntervalMin` from EEPROM (fall back to defaults on 0xFF / out-of-range)
+6. Send the first STATUS frame
 
 ### loop()
 
 1. **RF event handling:** When rc-switch receives a valid code, the 10 s debounce window is checked. If the code matches `CODE_OPEN`, `hitCount` is incremented and `Gate: TRIGGERED` is sent to the mesh and echoed on USB serial. `CODE_CLOSED` is handled the same way (when configured). Unrecognised codes are logged to USB serial as `RF unknown: <decimal>` and not forwarded.
-2. **STATUS heartbeat:** Every `STATUS_MS` (30 min), send the STATUS frame on both the mesh UART and USB serial.
+2. **Inbound CMD handling:** `pollCmd()` drains the SoftwareSerial RX buffer into a line buffer. On `\n`, the line is dispatched to the verb handlers described in the [CMD Protocol](#cmd-protocol) section.
+3. **STATUS heartbeat:** When `hbEnabled` is true and `hbIntervalMin * 60000` ms have elapsed since the last STATUS, send the STATUS frame on both the mesh UART and USB serial.
 
 ## Build and Upload
 

@@ -25,16 +25,26 @@
 #define SERIAL_RX   4   // Nano D4 <- R6 (4k7) <- Heltec GPIO48 (Meshtastic TX)
 
 // --- Timing (milliseconds) ---
-// STATUS frame is emitted on boot and every STATUS_MS afterwards. 30 min keeps
-// airtime low while still beating DigiNode CC's 16-min NodeOnlineTimeout.
-#define STATUS_MS      1800000UL  // 30 min STATUS heartbeat
+// STATUS frame is emitted on boot and every (hbIntervalMin * 60000) ms after.
+// 30 min default keeps airtime low while still beating DigiNode CC's 16-min
+// NodeOnlineTimeout. The interval is runtime-configurable via HB_INTERVAL
+// (see CMD handlers in main.cpp) and persisted in EEPROM.
+#define DEFAULT_HB_MIN 30         // default heartbeat interval (minutes)
+#define HB_MIN_MIN     1          // minimum HB_INTERVAL value
+#define HB_MIN_MAX     60         // maximum HB_INTERVAL value
 #define DEBOUNCE_MS    10000      // 10s — absorb KERUI retransmit bursts, one event per opening
 
 // --- EEPROM Layout ---
-// Persistent boot counter so the STATUS frame can report how many times the
-// Nano has booted across its lifetime. ATmega328P has 1 KB EEPROM; we use
-// bytes 0-1 as a uint16_t.
-#define EEPROM_ADDR_BOOTCOUNT 0
+// ATmega328P has 1 KB EEPROM. EEPROM reads as 0xFF when empty.
+#define EEPROM_ADDR_BOOTCOUNT 0   // uint16_t (2 bytes)
+#define EEPROM_ADDR_HB_EN     2   // uint8_t: 0=off, 1=on, 0xFF=default(on)
+#define EEPROM_ADDR_HB_MIN    3   // uint8_t: heartbeat interval in minutes
+
+// --- CMD line parser ---
+// CMDs arrive on SoftwareSerial RX (D4) from the Heltec's Meshtastic serial
+// module. Format: @<target> <verb>[:<param>[:<param2>...]]
+// target is ALL, Gate, or the SENSOR_NAME (case-insensitive).
+#define CMD_BUF_SIZE          80  // max line length before forced reset
 
 // --- UART Baud Rate ---
 #define MESH_BAUD 9600  // Meshtastic serial module baud
