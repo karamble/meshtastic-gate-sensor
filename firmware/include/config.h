@@ -8,7 +8,16 @@
 #define CODE_CLOSED  0       // disabled — sensor does not emit reliable close code
 
 // --- Sensor Identity ---
+// SENSOR_NAME is the instance prefix used in every outbound mesh frame
+// ("Gate: STATUS: ...", "Gate: TRIGGERED"). Mirrors AntiHunter's "AH34:" pattern
+// so parsers that expect "<id>:" at the start of a STATUS frame work cleanly.
 #define SENSOR_NAME "Gate"
+
+// SENSOR_TYPE is the uppercase sensor-class identifier carried in the STATUS
+// frame's Type: field. DigiNode CC uses this (not the prefix) to classify the
+// node, so future sensor builds can swap "GATESENSOR" for "MOTION", "DOOR",
+// "WINDOW", etc. without touching the dispatcher.
+#define SENSOR_TYPE "GATESENSOR"
 
 // --- Pin Assignments ---
 #define RF_PIN      2   // RXB6 DATA -> Nano D2 (INT0 for RCSwitch)
@@ -16,8 +25,16 @@
 #define SERIAL_RX   4   // Unused (Heltec TX not connected). Placeholder for SoftwareSerial.
 
 // --- Timing (milliseconds) ---
-#define HEARTBEAT_MS   300000  // 5 min heartbeat
-#define DEBOUNCE_MS    10000   // 10s — absorb KERUI retransmit bursts, one event per opening
+// STATUS frame is emitted on boot and every STATUS_MS afterwards. 30 min keeps
+// airtime low while still beating DigiNode CC's 16-min NodeOnlineTimeout.
+#define STATUS_MS      1800000UL  // 30 min STATUS heartbeat
+#define DEBOUNCE_MS    10000      // 10s — absorb KERUI retransmit bursts, one event per opening
+
+// --- EEPROM Layout ---
+// Persistent boot counter so the STATUS frame can report how many times the
+// Nano has booted across its lifetime. ATmega328P has 1 KB EEPROM; we use
+// bytes 0-1 as a uint16_t.
+#define EEPROM_ADDR_BOOTCOUNT 0
 
 // --- UART Baud Rate ---
 #define MESH_BAUD 9600  // Meshtastic serial module baud
