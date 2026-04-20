@@ -131,14 +131,36 @@ test-netlist:
 
 .PHONY: build upload monitor clean learn-sensor
 
+# Resolve the Nano's USB serial port by VID:PID (FTDI 0403:6001) so we never
+# accidentally talk to a co-plugged Heltec's CP2102. Falls back to any FTDI
+# FT232R via the persistent by-id symlink. Errors out if zero or multiple
+# candidates are found so the user sees what's wrong instead of getting
+# "not in sync" garbage from the wrong UART.
+NANO_PORT = $(shell \
+  ports=$$(ls /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_*-if00-port0 2>/dev/null); \
+  count=$$(echo "$$ports" | grep -c .); \
+  if [ "$$count" -eq 0 ]; then echo "NANO_NOT_FOUND"; \
+  elif [ "$$count" -gt 1 ]; then echo "MULTIPLE_NANOS"; \
+  else echo "$$ports"; fi)
+
 build:
 	cd firmware && pio run
 
 upload:
-	cd firmware && pio run -t upload
+	@case "$(NANO_PORT)" in \
+	  NANO_NOT_FOUND)  echo "ERROR: no FTDI FT232R (Arduino Nano) on USB"; exit 1 ;; \
+	  MULTIPLE_NANOS)  echo "ERROR: multiple FTDI FT232R devices found — set upload_port manually"; exit 1 ;; \
+	esac
+	@echo "Upload → $(NANO_PORT)"
+	cd firmware && pio run -t upload --upload-port "$(NANO_PORT)"
 
 monitor:
-	cd firmware && pio device monitor -b 115200
+	@case "$(NANO_PORT)" in \
+	  NANO_NOT_FOUND)  echo "ERROR: no FTDI FT232R (Arduino Nano) on USB"; exit 1 ;; \
+	  MULTIPLE_NANOS)  echo "ERROR: multiple FTDI FT232R devices found"; exit 1 ;; \
+	esac
+	@echo "Monitor ← $(NANO_PORT)"
+	cd firmware && pio device monitor -b 115200 --port "$(NANO_PORT)"
 
 clean:
 	cd firmware && pio run -t clean
@@ -149,6 +171,10 @@ clean:
 # Trigger the sensor, note the repeating decimal, set CODE_OPEN in
 # firmware/include/config.h, and re-run `make upload`.
 learn-sensor:
+	@case "$(NANO_PORT)" in \
+	  NANO_NOT_FOUND)  echo "ERROR: no FTDI FT232R (Arduino Nano) on USB"; exit 1 ;; \
+	  MULTIPLE_NANOS)  echo "ERROR: multiple FTDI FT232R devices found"; exit 1 ;; \
+	esac
 	@echo ""
 	@echo "  Sensor Learning Mode — see docs/learn-sensor.md"
 	@echo ""
@@ -159,4 +185,4 @@ learn-sensor:
 	@echo ""
 	@echo "  Press Ctrl+] to exit the monitor."
 	@echo ""
-	cd firmware && pio device monitor -b 115200
+	cd firmware && pio device monitor -b 115200 --port "$(NANO_PORT)"
