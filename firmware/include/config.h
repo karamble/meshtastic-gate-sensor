@@ -9,6 +9,12 @@
 // factory-calibrated sensor without any CMDs.
 #define DEFAULT_CODE_OPEN 150910   // KERUI D026 open/close code (factory seed; 0 disables seeding)
 #define MAX_CODES         16       // number of code slots (each 4 B in EEPROM)
+#define CODE_NAME_LEN     16       // bytes per name slot (15 chars + '\0')
+
+// Unknown RF codes at or above this value are broadcast as
+// "TRIGGERED:<code> unknown" so operators can CODE_ADD them from the mesh.
+// Codes below this are treated as 433 MHz noise and stay on USB debug only.
+#define UNKNOWN_MIN_CODE  1000UL
 
 // --- Sensor Identity ---
 // SENSOR_NAME is the instance prefix used in every outbound mesh frame
@@ -49,6 +55,7 @@
 #define EEPROM_ADDR_HITS      6    // uint32_t (4 B): cumulative hit counter, persisted
 // 10-11 reserved
 #define EEPROM_ADDR_CODES     12   // 16 × uint32_t (64 B): code list, 0xFFFFFFFF = empty slot
+#define EEPROM_ADDR_NAMES     76   // 16 × CODE_NAME_LEN (256 B): parallel name table, 0xFF byte = empty
 
 // --- CMD line parser ---
 // CMDs arrive on SoftwareSerial RX (D4) from the Heltec's Meshtastic serial

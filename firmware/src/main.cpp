@@ -3,6 +3,7 @@
 #include <RCSwitch.h>
 #include <SoftwareSerial.h>
 #include <avr/wdt.h>
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 #include "config.h"
@@ -11,7 +12,7 @@ RCSwitch rf = RCSwitch();
 SoftwareSerial meshSerial(SERIAL_RX, SERIAL_TX);
 
 unsigned long lastStatus = 0;
-unsigned long lastRfEvent = 0;
+unsigned long lastUnknownEvent = 0;       // global rate-limit for unknown-code chatter
 uint16_t bootCount = 0;
 uint32_t hitCount = 0;                    // persisted in EEPROM
 
@@ -21,8 +22,10 @@ uint8_t hbIntervalMin = DEFAULT_HB_MIN;
 uint8_t debounceSec   = DEFAULT_DEBOUNCE_SEC;
 
 // Dynamic 433 MHz code list. Empty slot sentinel = 0xFFFFFFFF (fresh EEPROM).
-uint32_t codes[MAX_CODES];
-uint8_t  codesCount = 0;
+uint32_t      codes[MAX_CODES];
+char          codeNames[MAX_CODES][CODE_NAME_LEN];   // parallel; empty string = unnamed
+unsigned long codeLastEvent[MAX_CODES];              // parallel; per-code debounce (RAM only)
+uint8_t       codesCount = 0;
 #define CODE_EMPTY 0xFFFFFFFFUL
 
 // Inbound CMD line buffer
@@ -34,9 +37,13 @@ void sendMessage(const char* msg) {
     Serial.println(msg);  // Debug echo
 }
 
-void sendEvent(const char* state, uint32_t code) {
-    char buf[64];
-    snprintf(buf, sizeof(buf), "%s: %s:%lu", SENSOR_NAME, state, (unsigned long)code);
+// Emits "Gate: TRIGGERED:<code> <name>". `name` may be NULL or ""; both render
+// as "unnamed" so downstream parsers always see a two-token payload.
+void sendTriggered(uint32_t code, const char* name) {
+    char buf[96];
+    snprintf(buf, sizeof(buf), "%s: TRIGGERED:%lu %s",
+             SENSOR_NAME, (unsigned long)code,
+             (name && name[0]) ? name : "unnamed");
     sendMessage(buf);
 }
 
@@ -77,39 +84,112 @@ void saveCodes() {
     }
 }
 
+// Writes only one name slot — callers changing a single name avoid rewriting
+// the whole 256 B table, preserving EEPROM write cycles.
+void saveNameSlot(uint8_t idx) {
+    int base = EEPROM_ADDR_NAMES + (int)idx * CODE_NAME_LEN;
+    for (uint8_t j = 0; j < CODE_NAME_LEN; j++) {
+        EEPROM.update(base + j, (uint8_t)codeNames[idx][j]);
+    }
+}
+
+void saveNames() {
+    for (uint8_t i = 0; i < MAX_CODES; i++) saveNameSlot(i);
+}
+
 void loadCodes() {
     codesCount = 0;
     for (uint8_t i = 0; i < MAX_CODES; i++) {
         EEPROM.get(EEPROM_ADDR_CODES + i * 4, codes[i]);
         if (codes[i] != CODE_EMPTY) codesCount++;
+
+        // Read the parallel name slot. Fresh EEPROM is 0xFF, which is neither
+        // a valid ASCII char nor a NUL — detect that and normalise to "".
+        int base = EEPROM_ADDR_NAMES + (int)i * CODE_NAME_LEN;
+        uint8_t first = EEPROM.read(base);
+        if (first == 0xFF || first == 0x00) {
+            codeNames[i][0] = '\0';
+        } else {
+            for (uint8_t j = 0; j < CODE_NAME_LEN; j++) {
+                codeNames[i][j] = (char)EEPROM.read(base + j);
+            }
+            codeNames[i][CODE_NAME_LEN - 1] = '\0';  // force-terminate
+        }
     }
     // Seed fresh chip with the factory-calibrated code so out-of-the-box
     // installs still work without a CODE_ADD from the operator.
     if (codesCount == 0 && DEFAULT_CODE_OPEN != 0) {
         codes[0] = DEFAULT_CODE_OPEN;
+        codeNames[0][0] = '\0';
         codesCount = 1;
         saveCodes();
+        saveNameSlot(0);
     }
 }
 
 // ── Code-list operations ──────────────────────────────
 
-bool codeKnown(uint32_t c) {
+// Returns slot index of `c`, or -1 if not in the registry.
+int8_t codeIndexOf(uint32_t c) {
     for (uint8_t i = 0; i < MAX_CODES; i++) {
-        if (codes[i] == c) return true;
+        if (codes[i] == c) return (int8_t)i;
     }
-    return false;
+    return -1;
 }
 
-enum CodeAddResult { CODE_ADDED, CODE_EXISTS, CODE_FULL };
+bool codeKnown(uint32_t c) {
+    return codeIndexOf(c) >= 0;
+}
 
-CodeAddResult codeAddSlot(uint32_t c) {
-    if (codeKnown(c)) return CODE_EXISTS;
+const char* codeNameFor(uint32_t c) {
+    int8_t i = codeIndexOf(c);
+    return (i >= 0) ? codeNames[i] : "";
+}
+
+// Valid name: NULL / "" (unnamed), or ≤15 chars of [A-Za-z0-9_-].
+// Reject ':', space, '@' because those are CMD-format delimiters.
+static bool nameValid(const char* s) {
+    if (!s) return true;
+    size_t n = strlen(s);
+    if (n == 0) return true;
+    if (n >= CODE_NAME_LEN) return false;
+    for (size_t i = 0; i < n; i++) {
+        char ch = s[i];
+        if (!(isalnum((unsigned char)ch) || ch == '_' || ch == '-')) return false;
+    }
+    return true;
+}
+
+enum CodeAddResult { CODE_ADDED, CODE_UPDATED, CODE_EXISTS, CODE_FULL };
+
+// Add `c` with `name` (NULL or "" means unnamed). If `c` already exists and
+// a non-empty `name` differs from the stored name, overwrite → CODE_UPDATED.
+// Same name (or no name supplied) on an existing code → CODE_EXISTS.
+CodeAddResult codeAddOrUpdate(uint32_t c, const char* name) {
+    for (uint8_t i = 0; i < MAX_CODES; i++) {
+        if (codes[i] == c) {
+            if (name && name[0] && strncmp(codeNames[i], name, CODE_NAME_LEN) != 0) {
+                strncpy(codeNames[i], name, CODE_NAME_LEN - 1);
+                codeNames[i][CODE_NAME_LEN - 1] = '\0';
+                saveNameSlot(i);
+                return CODE_UPDATED;
+            }
+            return CODE_EXISTS;
+        }
+    }
     for (uint8_t i = 0; i < MAX_CODES; i++) {
         if (codes[i] == CODE_EMPTY) {
             codes[i] = c;
+            if (name && name[0]) {
+                strncpy(codeNames[i], name, CODE_NAME_LEN - 1);
+                codeNames[i][CODE_NAME_LEN - 1] = '\0';
+            } else {
+                codeNames[i][0] = '\0';
+            }
+            codeLastEvent[i] = 0;  // fresh slot fires on first RF match
             codesCount++;
             saveCodes();
+            saveNameSlot(i);
             return CODE_ADDED;
         }
     }
@@ -120,8 +200,11 @@ bool codeRemove(uint32_t c) {
     for (uint8_t i = 0; i < MAX_CODES; i++) {
         if (codes[i] == c) {
             codes[i] = CODE_EMPTY;
+            codeNames[i][0] = '\0';
+            codeLastEvent[i] = 0;
             if (codesCount > 0) codesCount--;
             saveCodes();
+            saveNameSlot(i);
             return true;
         }
     }
@@ -129,14 +212,20 @@ bool codeRemove(uint32_t c) {
 }
 
 void codeClearAll() {
-    for (uint8_t i = 0; i < MAX_CODES; i++) codes[i] = CODE_EMPTY;
+    for (uint8_t i = 0; i < MAX_CODES; i++) {
+        codes[i] = CODE_EMPTY;
+        codeNames[i][0] = '\0';
+        codeLastEvent[i] = 0;
+    }
     codesCount = 0;
     saveCodes();
+    saveNames();
 }
 
 void sendCodeList() {
-    // 16 codes × 8 digits max + 15 commas + "Gate: CODES:" prefix < 180 bytes
-    char buf[192];
+    // 16 slots × (8-digit code + '=' + 15-char name) + 15 commas + prefix ≈ 420 B.
+    // Budget 256 to stay well under a LoRa payload; truncate with tail margin.
+    char buf[256];
     int off = snprintf(buf, sizeof(buf), "%s: CODES:", SENSOR_NAME);
     if (codesCount == 0) {
         snprintf(buf + off, sizeof(buf) - off, "NONE");
@@ -144,9 +233,10 @@ void sendCodeList() {
         bool first = true;
         for (uint8_t i = 0; i < MAX_CODES; i++) {
             if (codes[i] == CODE_EMPTY) continue;
-            if (off >= (int)(sizeof(buf) - 12)) break;  // leave tail margin
-            off += snprintf(buf + off, sizeof(buf) - off, "%s%lu",
-                            first ? "" : ",", (unsigned long)codes[i]);
+            if (off >= (int)(sizeof(buf) - (CODE_NAME_LEN + 16))) break;  // tail margin
+            const char* nm = codeNames[i][0] ? codeNames[i] : "unnamed";
+            off += snprintf(buf + off, sizeof(buf) - off, "%s%lu=%s",
+                            first ? "" : ",", (unsigned long)codes[i], nm);
             first = false;
         }
     }
@@ -230,14 +320,27 @@ static void handleCommand(const char* target, const char* verb, const char* para
     }
 
     // RF code registry
+    // Format: CODE_ADD:<code>[:<name>]
+    // Re-issuing with a different name on an existing code updates the name.
     if (strcasecmp(verb, "CODE_ADD") == 0) {
         if (param == NULL || *param == '\0') { sendAck("CODE", "ERROR"); return; }
-        unsigned long c = strtoul(param, NULL, 10);
+        char* endp = NULL;
+        unsigned long c = strtoul(param, &endp, 10);
         if (c == 0UL || c > 0xFFFFFFUL) { sendAck("CODE", "ERROR"); return; }
-        switch (codeAddSlot((uint32_t)c)) {
-            case CODE_ADDED:  sendAck("CODE", "OK");     break;
-            case CODE_EXISTS: sendAck("CODE", "EXISTS"); break;
-            case CODE_FULL:   sendAck("CODE", "FULL");   break;
+        const char* name = NULL;
+        if (endp && *endp == ':') {
+            name = endp + 1;
+            if (*name == '\0') name = NULL;   // trailing colon = no name
+        } else if (endp && *endp != '\0') {
+            sendAck("CODE", "ERROR");          // garbage after the number
+            return;
+        }
+        if (!nameValid(name)) { sendAck("CODE", "ERROR"); return; }
+        switch (codeAddOrUpdate((uint32_t)c, name)) {
+            case CODE_ADDED:   sendAck("CODE", "OK");      break;
+            case CODE_UPDATED: sendAck("CODE", "UPDATED"); break;
+            case CODE_EXISTS:  sendAck("CODE", "EXISTS");  break;
+            case CODE_FULL:    sendAck("CODE", "FULL");    break;
         }
         return;
     }
@@ -358,24 +461,34 @@ void setup() {
 void loop() {
     unsigned long now = millis();
 
-    // RF event handling
+    // RF event handling — debounce is per-code, so two different codes fired
+    // back-to-back both get reported. Unknown codes share one global window
+    // to keep 433 MHz noise from flooding the mesh.
     if (rf.available()) {
         unsigned long code = rf.getReceivedValue();
         rf.resetAvailable();
 
         unsigned long debounceMs = (unsigned long)debounceSec * 1000UL;
-        if (code != 0 && (now - lastRfEvent) > debounceMs) {
-            lastRfEvent = now;
-
-            if (codeKnown((uint32_t)code)) {
-                hitCount++;
-                saveHitCount();
-                sendEvent("TRIGGERED", (uint32_t)code);
-            } else {
-                // Unknown code — log on USB serial for `make learn-sensor`.
+        if (code != 0) {
+            int8_t idx = codeIndexOf((uint32_t)code);
+            if (idx >= 0) {
+                if ((now - codeLastEvent[idx]) > debounceMs) {
+                    codeLastEvent[idx] = now;
+                    hitCount++;
+                    saveHitCount();
+                    sendTriggered((uint32_t)code, codeNames[idx]);
+                }
+            } else if ((now - lastUnknownEvent) > debounceMs) {
+                lastUnknownEvent = now;
+                // Unknown code — always log on USB for `make learn-sensor`.
                 char buf[64];
                 snprintf(buf, sizeof(buf), "RF unknown: %lu", code);
                 Serial.println(buf);
+                // Broadcast only if above the noise floor (short bursts at
+                // 1-3 digits are 433 MHz chatter, not a real transmitter).
+                if (code >= UNKNOWN_MIN_CODE) {
+                    sendTriggered((uint32_t)code, "unknown");
+                }
             }
         }
     }
