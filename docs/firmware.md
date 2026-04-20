@@ -137,6 +137,14 @@ Printed to the Nano's USB serial (115200 baud) only, not forwarded to Meshtastic
 
 The Nano listens for command frames on its SoftwareSerial RX pin (D4, fed directly by Heltec GPIO48 as of PCB v2.5). Commands are plain text forwarded by the Heltec's Meshtastic serial module in `TEXTMSG` mode.
 
+> **Broadcasts only — DMs are a structural dead end.**
+>
+> Since Meshtastic firmware 2.5, direct messages are PKI-encrypted end-to-end and the SerialModule's `TEXTMSG` path is built around channel broadcasts only — a DM addressed to the gate-Heltec's nodeNum **never gets written to GPIO48**, so the Nano sees zero bytes for it. There is no firmware or wiring change on the Nano side that can recover those packets; the SerialModule has already discarded them.
+>
+> Every command must therefore be sent as a **mesh broadcast** carrying the `@Gate` (or `@ALL`) addressing prefix in the payload. The Nano's `processCmdLine` filter does the per-sensor dispatch (see [Wire format](#wire-format) below). DigiNode CC's `handleSendChatMessage` already auto-rewrites a DM addressed to a `gatesensor` node into a broadcast with the `@<ShortName>` prefix prepended, so the chat UI just works — but any third-party tool talking to a gatesensor must do the same rewrite itself.
+>
+> If you ever need true DM support on the sensor (e.g. for one-of-many fan-out), the only path is switching the Heltec to `PROTO` mode and replacing the Nano with an MCU big enough to host the [Meshtastic-arduino](https://github.com/meshtastic/Meshtastic-arduino) library and its nanopb buffers — the ATmega328P's 2 KB SRAM is too tight. An XIAO ESP32-S3 or similar would be a comfortable fit.
+
 ### Wire format
 
 ```
