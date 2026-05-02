@@ -31,6 +31,9 @@ help:
 	@echo "    make monitor       Serial monitor (115200 baud)"
 	@echo "    make learn-sensor  Watch USB serial to discover a new 433 MHz sensor's code"
 	@echo "    make clean         Clean build artifacts"
+	@echo ""
+	@echo "  Heltec Meshtastic (stock firmware):"
+	@echo "    make flash-heltec-standalone  Flash + configure for retail (public PSK + BLE on)"
 
 # --- KiCad targets ---
 
@@ -164,6 +167,18 @@ monitor:
 
 clean:
 	cd firmware && pio run -t clean
+
+# --- Heltec Meshtastic flash targets ---
+
+.PHONY: flash-heltec-standalone
+
+# Retail / first-buyer flash: keeps the public LongFast PSK ('AQ==') and
+# leaves Bluetooth enabled so the buyer can pair with the Meshtastic mobile
+# app and migrate to a private PSK themselves. No .env / MESH_PSK required.
+# For the developer / private-mesh flow, run scripts/flash-heltec-meshtastic.sh
+# without --standalone (and set MESH_PSK in .env).
+flash-heltec-standalone:
+	./scripts/flash-heltec-meshtastic.sh --standalone
 
 # Learn a new 433 MHz door sensor's code — see docs/learn-sensor.md.
 # The production firmware logs every decoded RF hit on USB serial; any

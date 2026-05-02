@@ -49,25 +49,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 ENV_FILE="$PROJECT_DIR/.env"
 
-if [ ! -f "$ENV_FILE" ]; then
-    log_error ".env file not found at $ENV_FILE"
-    echo ""
-    echo "  Create it from the example:"
-    echo "    cp .env.example .env"
-    echo "    # Edit .env and set your MESH_PSK"
-    echo ""
-    exit 1
-fi
-
-# shellcheck source=/dev/null
-source "$ENV_FILE"
-
-if [ -z "$MESH_PSK" ] || [ "$MESH_PSK" = "base64:REPLACE_WITH_YOUR_256BIT_PSK" ]; then
-    log_error "MESH_PSK not set or still contains placeholder"
-    echo "  Edit .env and set your 256-bit PSK"
-    exit 1
-fi
-
 # Defaults
 PORT=""
 REGION="EU_868"
@@ -75,7 +56,42 @@ VERSION=""
 FLASH_ONLY=false
 CONFIG_ONLY=false
 CONFIRM_CONFIG=false
+STANDALONE=false
 TMPDIR=""
+
+# Pre-parse for --standalone so the .env / MESH_PSK requirement is skipped
+# when we are flashing a retail-shipping unit on the public LongFast PSK.
+for arg in "$@"; do
+    if [ "$arg" = "--standalone" ]; then
+        STANDALONE=true
+        break
+    fi
+done
+
+if [ "$STANDALONE" = false ]; then
+    if [ ! -f "$ENV_FILE" ]; then
+        log_error ".env file not found at $ENV_FILE"
+        echo ""
+        echo "  Create it from the example:"
+        echo "    cp .env.example .env"
+        echo "    # Edit .env and set your MESH_PSK"
+        echo ""
+        echo "  Or run with --standalone to ship on the public LongFast PSK"
+        echo "  (no .env / MESH_PSK required)."
+        echo ""
+        exit 1
+    fi
+
+    # shellcheck source=/dev/null
+    source "$ENV_FILE"
+
+    if [ -z "$MESH_PSK" ] || [ "$MESH_PSK" = "base64:REPLACE_WITH_YOUR_256BIT_PSK" ]; then
+        log_error "MESH_PSK not set or still contains placeholder"
+        echo "  Edit .env and set your 256-bit PSK,"
+        echo "  or run with --standalone for a retail public-channel unit."
+        exit 1
+    fi
+fi
 
 # Cleanup temp files on exit
 cleanup() {
@@ -95,7 +111,8 @@ for use as a gate sensor LoRa node.
 The gate sensor Heltec receives UART from an Arduino Nano at 9600 baud
 on GPIO47 and broadcasts gate/door alerts over the LoRa mesh.
 
-Requires .env file with MESH_PSK (see .env.example).
+Requires .env file with MESH_PSK (see .env.example), unless --standalone is
+used (retail mode keeps the public LongFast PSK and needs no .env).
 
 Options:
   -p PORT       Serial port (default: auto-detect CP210x)
@@ -106,17 +123,23 @@ Options:
   --flash-only     Flash firmware but skip Meshtastic serial configuration
   --config-only    Configure an already-flashed device (skip firmware flash)
   --confirm-config Verify settings and close serial port (no flash, no config)
+  --standalone     Retail / first-buyer mode: keep the public LongFast PSK
+                   ('AQ==') and leave Bluetooth ENABLED so the buyer can pair
+                   with the Meshtastic mobile app and migrate to a private
+                   PSK themselves. Skips the private '--ch-set psk' and
+                   'bluetooth.enabled false' steps. Does NOT require .env.
   -h, --help       Show this help message
 
 Uses stock Meshtastic firmware (no custom build required).
 
 Examples:
-  $(basename "$0")                           # Auto-detect, EU_868, latest
+  $(basename "$0")                           # Auto-detect, EU_868, latest (private)
   $(basename "$0") -p /dev/ttyUSB1 -r US     # Specific port, US region
   $(basename "$0") -v v2.7.15.567b8ea        # Specific firmware version
   $(basename "$0") --flash-only              # Flash only, no config
   $(basename "$0") --config-only             # Configure already-flashed device
   $(basename "$0") --confirm-config          # Verify settings + close serial port
+  $(basename "$0") --standalone              # Retail unit: public PSK + BLE on
 EOF
     exit 0
 }
@@ -130,6 +153,7 @@ while [[ $# -gt 0 ]]; do
         --flash-only) FLASH_ONLY=true; shift ;;
         --config-only) CONFIG_ONLY=true; shift ;;
         --confirm-config) CONFIRM_CONFIG=true; shift ;;
+        --standalone) STANDALONE=true; shift ;;
         -h|--help) usage ;;
         *)
             log_error "Unknown option: $1"
@@ -150,16 +174,23 @@ if [ "$CONFIRM_CONFIG" = true ] && { [ "$FLASH_ONLY" = true ] || [ "$CONFIG_ONLY
 fi
 
 # Banner
+if [ "$STANDALONE" = true ]; then
+    MODE_LABEL="STANDALONE (public LongFast PSK, BLE on)"
+else
+    MODE_LABEL="PRIVATE (developer / .env MESH_PSK, BLE off)"
+fi
+
 echo ""
 echo "════════════════════════════════════════════════════════════════"
 echo "     Heltec V3 Meshtastic — Gate Sensor Node"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
-echo "  Region:        $REGION"
-echo "  Serial baud:   9600 (Nano SoftwareSerial)"
-echo "  Serial RXD:    GPIO47"
-echo "  Flash only:    $FLASH_ONLY"
-echo "  Config only:   $CONFIG_ONLY"
+echo "  Mode:           $MODE_LABEL"
+echo "  Region:         $REGION"
+echo "  Serial baud:    9600 (Nano SoftwareSerial)"
+echo "  Serial RXD:     GPIO47"
+echo "  Flash only:     $FLASH_ONLY"
+echo "  Config only:    $CONFIG_ONLY"
 echo "  Confirm config: $CONFIRM_CONFIG"
 echo ""
 
@@ -435,16 +466,32 @@ elif [ "$CONFIRM_CONFIG" = true ]; then
     verify_get "serial.txd" "48"                            || VERIFY_FAIL=1
     verify_get "serial.baud" "BAUD_9600\|7"                 || VERIFY_FAIL=1
     verify_get "serial.mode" "TEXTMSG\|3"                   || VERIFY_FAIL=1
-    verify_get "bluetooth.enabled" "false\|False"           || VERIFY_FAIL=1
+    if [ "$STANDALONE" = true ]; then
+        verify_get "bluetooth.enabled" "true\|True"         || VERIFY_FAIL=1
+    else
+        verify_get "bluetooth.enabled" "false\|False"       || VERIFY_FAIL=1
+    fi
 
     CH_OUTPUT=$(meshtastic --port "$PORT" --info 2>&1) || true
-    if echo "$CH_OUTPUT" | grep -q "psk.*AQ=="; then
-        log_error "  FAIL  Channel PSK is still default (AQ==)"
-        VERIFY_FAIL=1
-    elif echo "$CH_OUTPUT" | grep -q "psk"; then
-        log_info "  OK    Channel PSK is set (non-default)"
+    if [ "$STANDALONE" = true ]; then
+        # Standalone retail unit: PSK MUST be the default LongFast 'AQ=='
+        if echo "$CH_OUTPUT" | grep -q "psk.*AQ=="; then
+            log_info "  OK    Channel PSK is default LongFast (AQ==) — standalone retail"
+        elif echo "$CH_OUTPUT" | grep -q "psk"; then
+            log_error "  FAIL  Channel PSK is non-default (expected AQ== for --standalone)"
+            VERIFY_FAIL=1
+        else
+            log_warn "  WARN  Could not verify channel PSK"
+        fi
     else
-        log_warn "  WARN  Could not verify channel PSK"
+        if echo "$CH_OUTPUT" | grep -q "psk.*AQ=="; then
+            log_error "  FAIL  Channel PSK is still default (AQ==)"
+            VERIFY_FAIL=1
+        elif echo "$CH_OUTPUT" | grep -q "psk"; then
+            log_info "  OK    Channel PSK is set (non-default)"
+        else
+            log_warn "  WARN  Could not verify channel PSK"
+        fi
     fi
 
     if [ "$VERIFY_FAIL" -ne 0 ]; then
@@ -464,10 +511,14 @@ else
     mesh_cmd "Setting LoRa region to $REGION..." \
         --set lora.region "$REGION"
 
-    mesh_cmd "Setting private channel PSK..." \
-        --ch-set psk "$MESH_PSK" --ch-index 0
+    if [ "$STANDALONE" = false ]; then
+        mesh_cmd "Setting private channel PSK..." \
+            --ch-set psk "$MESH_PSK" --ch-index 0
+    else
+        log_info "Skipping --ch-set psk (--standalone: keeping public LongFast PSK 'AQ==')"
+    fi
 
-    mesh_cmd "Disabling internal GPS (gate sensor has no GPS)..." \
+    mesh_cmd "Setting internal GPS to NOT_PRESENT (gate sensor has no GPS)..." \
         --set position.gps_mode NOT_PRESENT
 
     mesh_cmd "Setting telemetry broadcast interval to 30 min..." \
@@ -492,8 +543,12 @@ else
         --set-owner "GateSensor" \
         --set-owner-short "GATE"
 
-    mesh_cmd "Disabling Bluetooth..." \
-        --set bluetooth.enabled false
+    if [ "$STANDALONE" = false ]; then
+        mesh_cmd "Disabling Bluetooth..." \
+            --set bluetooth.enabled false
+    else
+        log_info "Skipping bluetooth.enabled=false (--standalone: leaving BLE on for buyer pairing)"
+    fi
 
     ############################################################################
     # Verification
@@ -540,16 +595,32 @@ else
     verify_get "serial.txd" "48"                            || VERIFY_FAIL=1
     verify_get "serial.baud" "BAUD_9600\|7"                 || VERIFY_FAIL=1
     verify_get "serial.mode" "TEXTMSG\|3"                   || VERIFY_FAIL=1
-    verify_get "bluetooth.enabled" "false\|False"           || VERIFY_FAIL=1
+    if [ "$STANDALONE" = true ]; then
+        verify_get "bluetooth.enabled" "true\|True"         || VERIFY_FAIL=1
+    else
+        verify_get "bluetooth.enabled" "false\|False"       || VERIFY_FAIL=1
+    fi
 
     CH_OUTPUT=$(meshtastic --port "$PORT" --info 2>&1) || true
-    if echo "$CH_OUTPUT" | grep -q "psk.*AQ=="; then
-        log_error "  FAIL  Channel PSK is still default (AQ==)"
-        VERIFY_FAIL=1
-    elif echo "$CH_OUTPUT" | grep -q "psk"; then
-        log_info "  OK    Channel PSK is set (non-default)"
+    if [ "$STANDALONE" = true ]; then
+        # Standalone retail unit: PSK MUST be the default LongFast 'AQ=='
+        if echo "$CH_OUTPUT" | grep -q "psk.*AQ=="; then
+            log_info "  OK    Channel PSK is default LongFast (AQ==) — standalone retail"
+        elif echo "$CH_OUTPUT" | grep -q "psk"; then
+            log_error "  FAIL  Channel PSK is non-default (expected AQ== for --standalone)"
+            VERIFY_FAIL=1
+        else
+            log_warn "  WARN  Could not verify channel PSK"
+        fi
     else
-        log_warn "  WARN  Could not verify channel PSK"
+        if echo "$CH_OUTPUT" | grep -q "psk.*AQ=="; then
+            log_error "  FAIL  Channel PSK is still default (AQ==)"
+            VERIFY_FAIL=1
+        elif echo "$CH_OUTPUT" | grep -q "psk"; then
+            log_info "  OK    Channel PSK is set (non-default)"
+        else
+            log_warn "  WARN  Could not verify channel PSK"
+        fi
     fi
 
     if [ "$VERIFY_FAIL" -ne 0 ]; then
@@ -615,7 +686,13 @@ echo "  Region:       $REGION"
 echo "  Serial RXD:   GPIO47 (from Arduino Nano via voltage divider)"
 echo "  Serial baud:  9600 (SoftwareSerial)"
 echo "  Serial mode:  TEXTMSG"
-echo "  Channel:      PSK configured (256-bit)"
+if [ "$STANDALONE" = true ]; then
+    echo "  Channel:      public LongFast (PSK 'AQ==') — buyer migrates to private"
+    echo "  Bluetooth:    enabled (default) — buyer can pair with the Meshtastic app"
+else
+    echo "  Channel:      PSK configured (256-bit, private)"
+    echo "  Bluetooth:    disabled"
+fi
 echo "  Configured:   $([ "$FLASH_ONLY" = true ] && echo "no (flash-only)" || echo "yes")"
 echo ""
 if [ "$FLASH_ONLY" = true ]; then
